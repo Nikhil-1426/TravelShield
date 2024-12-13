@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "879350140169",
+    "project_id": "travelshield-903aa",
+    "storage_bucket": "travelshield-903aa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:879350140169:android:da0a5dbe883ca067a657d8",
+        "android_client_info": {
+          "package_name": "travelshield.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZsDZK_k0g0hahVPPI_oGRIIs11RVNmvM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
