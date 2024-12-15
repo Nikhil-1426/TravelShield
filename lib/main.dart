@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'loading_page.dart';
 import 'signin_page.dart';
 import 'signup_page.dart';
@@ -8,7 +9,9 @@ import 'create_reminder_page.dart';
 import 'settings_page.dart';
 import 'health_history_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 
