@@ -1,4 +1,4 @@
-package com.example.health_passport
+package travelshield.com
 
 import io.flutter.embedding.android.FlutterActivity
 
