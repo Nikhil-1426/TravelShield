@@ -1,8 +1,40 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:health_passport/home_page.dart';
 import 'package:health_passport/signup_page.dart';
 
-class SignInPage extends StatelessWidget {
+class SignInPage extends StatefulWidget {
+  @override
+  _SignInPageState createState() => _SignInPageState();
+}
+
+class _SignInPageState extends State<SignInPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  String _errorMessage = ''; // To store error messages
+
+  Future<void> _signIn() async {
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      // If sign-in is successful, navigate to HomePage
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
+    } catch (e) {
+      // If error occurs, show an error message
+      setState(() {
+        _errorMessage = e.toString();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,17 +79,29 @@ class SignInPage extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 30),
-                _buildTextField(Icons.email, 'Email', false),
+                _buildTextField(
+                  Icons.email,
+                  'Email',
+                  false,
+                  _emailController,
+                ),
                 SizedBox(height: 20),
-                _buildTextField(Icons.lock, 'Password', true),
+                _buildTextField(
+                  Icons.lock,
+                  'Password',
+                  true,
+                  _passwordController,
+                ),
+                if (_errorMessage.isNotEmpty) ...[
+                  SizedBox(height: 10),
+                  Text(
+                    _errorMessage,
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ],
                 SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => HomePage()),
-                    );
-                  },
+                  onPressed: _signIn,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.teal,
@@ -92,8 +136,9 @@ class SignInPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(IconData icon, String hintText, bool isPassword) {
+  Widget _buildTextField(IconData icon, String hintText, bool isPassword, TextEditingController controller) {
     return TextField(
+      controller: controller,
       obscureText: isPassword,
       decoration: InputDecoration(
         filled: true,
