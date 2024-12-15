@@ -1,8 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:health_passport/home_page.dart';
 import 'package:health_passport/signin_page.dart';
 
-class SignUpPage extends StatelessWidget {
+class SignUpPage extends StatefulWidget {
+  @override
+  _SignUpPageState createState() => _SignUpPageState();
+}
+
+class _SignUpPageState extends State<SignUpPage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  // Function to handle Sign Up
+  Future<void> signUp() async {
+    String name = nameController.text.trim();
+    String email = emailController.text.trim();
+    String password = passwordController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      // Show an alert if any field is empty
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please fill all fields')),
+      );
+      return;
+    }
+
+    try {
+      // Create user with email and password
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // Create a new user document in Firestore
+      await _firestore.collection('users').doc(userCredential.user?.uid).set({
+        'name': name,
+        'email': email,
+        'uid': userCredential.user?.uid,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // Navigate to HomePage after successful sign up
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
+    } catch (e) {
+      // Handle sign-up errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,19 +103,14 @@ class SignUpPage extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 30),
-                _buildTextField(Icons.person, 'Full Name', false),
+                _buildTextField(Icons.person, 'Full Name', false, nameController),
                 SizedBox(height: 20),
-                _buildTextField(Icons.email, 'Email', false),
+                _buildTextField(Icons.email, 'Email', false, emailController),
                 SizedBox(height: 20),
-                _buildTextField(Icons.lock, 'Password', true),
+                _buildTextField(Icons.lock, 'Password', true, passwordController),
                 SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => HomePage()),
-                    );
-                  },
+                  onPressed: signUp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.teal,
@@ -76,7 +127,7 @@ class SignUpPage extends StatelessWidget {
                 SizedBox(height: 20),
                 TextButton(
                   onPressed: () {
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (context) => SignInPage()),
                     );
@@ -94,8 +145,9 @@ class SignUpPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(IconData icon, String hintText, bool isPassword) {
+  Widget _buildTextField(IconData icon, String hintText, bool isPassword, TextEditingController controller) {
     return TextField(
+      controller: controller,
       obscureText: isPassword,
       decoration: InputDecoration(
         filled: true,
