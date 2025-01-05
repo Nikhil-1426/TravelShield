@@ -5,6 +5,10 @@ import 'settings_page.dart';
 import 'health_history_page.dart';
 
 class HomePage extends StatelessWidget {
+  final String uid;
+
+  const HomePage({Key? key, required this.uid}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,7 +42,6 @@ class HomePage extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // Welcome Section
               Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
@@ -74,8 +77,6 @@ class HomePage extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Feature Grid
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -96,7 +97,7 @@ class HomePage extends StatelessWidget {
                         title: 'Create Reminder',
                         icon: Icons.alarm_add,
                         color: Colors.purple,
-                        destination: CreateReminderPage(),
+                        destination: CreateReminderPage(uid: uid), // Pass UID
                       ),
                       _buildFeatureCard(
                         context,
@@ -123,7 +124,6 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // Function to create feature cards
   Widget _buildFeatureCard(BuildContext context,
       {required String title,
       required IconData icon,

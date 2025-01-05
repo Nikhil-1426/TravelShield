@@ -4,10 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart';
 
 class CreateReminderPage extends StatefulWidget {
-  final String? uid; // User's UID
-  const CreateReminderPage({Key? key, this.uid}) : super(key: key);
+  final String uid; // User's UID
+  const CreateReminderPage({Key? key, required this.uid}) : super(key: key);
 
   @override
   _CreateReminderPageState createState() => _CreateReminderPageState();
@@ -17,9 +18,9 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
   String? currentCity;
   String? destinationCity;
   final Map<String, String> cityToFileMap = {
-    'Mumbai': 'mumbai_diet.xlsx',
-    'Washington': 'washington_diet.xlsx',
-    'Cape Town': 'capetown_diet.xlsx',
+    'Mumbai': "assets/mumbai_diet.xlsx",
+    'Washington': "assets/washington_diet.xlsx",
+    'Cape Town': "assets/capetown_diet.xlsx",
   };
   final List<String> cities = ['Washington', 'Mumbai', 'Cape Town'];
 
@@ -127,6 +128,14 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
     );
   }
 
+  Future<File> loadAssetToTempFile(String assetPath) async {
+  final byteData = await rootBundle.load(assetPath); // Load the asset
+  final tempDir = await getTemporaryDirectory(); // Get temporary directory
+  final tempFile = File('${tempDir.path}/${assetPath.split('/').last}');
+  await tempFile.writeAsBytes(byteData.buffer.asUint8List());
+  return tempFile;
+}
+
   Future<void> processAndSendData() async {
     // 1. Fetch responses from Firestore
     final responses = await fetchUserResponses();
@@ -135,49 +144,76 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
     final jsonFilePath = await generateJsonFile(responses);
 
     // 3. Get city-specific diet files based on the selected cities
-    final currentCityXlsxPath = cityToFileMap[currentCity ?? ''] ?? '';
-    final destinationCityXlsxPath = cityToFileMap[destinationCity ?? ''] ?? '';
-
-    if (currentCityXlsxPath.isEmpty || destinationCityXlsxPath.isEmpty) {
-      throw Exception("Invalid city diet files.");
-    }
+    final currentCityTempFile = await loadAssetToTempFile(cityToFileMap[currentCity]!);
+    final destinationCityTempFile = await loadAssetToTempFile(cityToFileMap[destinationCity]!);
 
     // 4. Send data to Gemini
     await sendToGemini(
       jsonFilePath: jsonFilePath,
-      currentCityXlsxPath: currentCityXlsxPath,
-      destinationCityXlsxPath: destinationCityXlsxPath,
+      currentCityXlsxPath: currentCityTempFile.path,
+    destinationCityXlsxPath: destinationCityTempFile.path,
     );
   }
 
   Future<Map<String, dynamic>> fetchUserResponses() async {
-    try {
-      final docSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.uid) // Use the UID of the authenticated user
-          .collection('questionnaireResponses')
-          .orderBy('completedAt',
-              descending: true) // Get the most recent response
-          .limit(1) // Fetch the latest response
-          .get();
+  try {
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc('84p0YtbVEVNpzwgOcOokGJWz0Wf2')
+        .collection('questionnaireResponses')
+        .orderBy('completedAt', descending: true)  // Order by completion timestamp
+        .limit(1)  // Get most recent document
+        .get();
 
-      if (docSnapshot.docs.isNotEmpty) {
-        return docSnapshot.docs.first.data() ?? {};
-      } else {
-        throw Exception("User responses not found in Firestore.");
-      }
-    } catch (e) {
-      throw Exception("Firestore error: ${e.toString()}");
+    if (querySnapshot.docs.isNotEmpty) {
+      final data = querySnapshot.docs.first.data();
+      return {
+        'success': true,
+        'responses': data['responses'] ?? [],
+      };
+    } else {
+      print('No documents found for UID: ${widget.uid}');  // Debug print
+      throw Exception("No questionnaire responses found.");
     }
+  } catch (e) {
+    print('Error fetching responses: $e');  // Debug print
+    throw Exception("Error fetching responses: ${e.toString()}");
   }
+}
 
   Future<String> generateJsonFile(Map<String, dynamic> responses) async {
+  try {
     final directory = await getApplicationDocumentsDirectory();
     final filePath = '${directory.path}/user_responses.json';
     final file = File(filePath);
+
+    // Check if the file already exists
+    if (file.existsSync()) {
+      print("File already exists at $filePath");
+    } else {
+      print("File does not exist. Creating file at $filePath");
+    }
+
+    // Write the responses to the file
     await file.writeAsString(jsonEncode(responses));
+
+    // Log the file path to confirm
+    print("JSON file created at: $filePath");
+
+    // Check if the file was created successfully
+    if (file.existsSync()) {
+      print("File successfully created at $filePath");
+    } else {
+      print("Failed to create file at $filePath");
+    }
+
     return filePath;
+  } catch (e) {
+    print('Error generating JSON file: $e');
+    throw Exception("Error generating JSON file: ${e.toString()}");
   }
+}
+
 
   Future<void> sendToGemini({
     required String jsonFilePath,

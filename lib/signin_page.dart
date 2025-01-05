@@ -18,15 +18,27 @@ class _SignInPageState extends State<SignInPage> {
 
   Future<void> _signIn() async {
     try {
+      // Sign in with email and password
       await _auth.signInWithEmailAndPassword(
         email: _emailController.text,
         password: _passwordController.text,
       );
-      // If sign-in is successful, navigate to HomePage
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage()),
-      );
+
+      // Get the current user UID
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        // If user is signed in, pass the UID to HomePage
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomePage(uid: user.uid), // Pass the uid here
+          ),
+        );
+      } else {
+        setState(() {
+          _errorMessage = "User not found";
+        });
+      }
     } catch (e) {
       // If error occurs, show an error message
       setState(() {
