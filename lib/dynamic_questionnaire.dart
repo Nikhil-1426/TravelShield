@@ -678,7 +678,7 @@ class _DynamicQuestionnaireState extends State<DynamicQuestionnaire> {
   void _navigateToNextScreen() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => HomePage()),
+      MaterialPageRoute(builder: (context) => HomePage(uid: widget.uid)),
     );
   }
 

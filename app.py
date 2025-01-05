@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
 import pandas as pd
 import os
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # Directory to save uploaded files temporarily
 UPLOAD_FOLDER = './uploads'
@@ -84,7 +86,6 @@ def analyze_diet_and_responses(user_responses, current_city_diet, destination_ci
     # Example: Provide recommendations based on user responses
     if 'diabetes' in user_responses:
         recommendations.append("Monitor blood sugar levels during your travel.")
-
     return {
         "precautions": precautions,
         "recommendations": recommendations
