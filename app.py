@@ -1,4 +1,4 @@
-from flask import Flask, send_file, request, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import google.generativeai as genai
 import os
@@ -17,9 +17,8 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.route('/')
 def home():
-    return jsonify({"message": "Welcome to the Travel Health API. Use the /process-travel-health endpoint to upload and process data."})
+    return jsonify({"message": "Welcome to the Travel Health API. Use the /analyze-travel-health endpoint to upload and process data."})
 
-# Route to handle the analysis request
 @app.route('/analyze-travel-health', methods=['POST'])
 def analyze_travel_health():
     try:
@@ -47,23 +46,39 @@ def analyze_travel_health():
         current_city_diet_file.save(current_city_diet_path)
         destination_city_diet_file.save(destination_city_diet_path)
 
-        # Load diet data
-        current_city_diet = pd.read_excel(current_city_diet_path)
-        destination_city_diet = pd.read_excel(destination_city_diet_path)
+        # Step 3: Convert files to supported formats
+        # Convert JSON to plain text
+        with open(responses_path, 'r') as responses_file:
+            responses_content = responses_file.read()
 
-        # Step 3: Create a prompt for the analysis
+        # Convert Excel to plain text (Markdown or CSV)
+        current_city_diet = pd.read_excel(current_city_diet_path)
+        current_city_diet_text = current_city_diet.to_csv(index=False)
+
+        destination_city_diet = pd.read_excel(destination_city_diet_path)
+        destination_city_diet_text = destination_city_diet.to_csv(index=False)
+
+        # Step 4: Create a prompt for the analysis
         prompt = (
-            f"These are the 3 files: the user responses, diet for {current_city}, and diet for {destination_city}. "
-            f"Let's say a person is traveling from {current_city} to {destination_city}. "
-            "What are the precautions related to the diet, weather, and health he should be taking?"
+            f"Analyze the following travel scenario:\n"
+            f"- Current city: {current_city}\n"
+            f"- Destination city: {destination_city}\n\n"
+            f"Attached are:\n"
+            f"1. User responses (plain text).\n"
+            f"2. Diet information for {current_city} (CSV format).\n"
+            f"3. Diet information for {destination_city} (CSV format).\n\n"
+            f"Provide a detailed analysis of dietary precautions, health considerations, and weather-related advice."
         )
 
-        # Step 4: Create a Gemini model instance
+        # Step 5: Send the text and prompt to Gemini for analysis
         model = genai.GenerativeModel('gemini-1.5-pro')
+        response = model.generate_content([
+            {'text': prompt},
+            {'text': responses_content},
+            {'text': current_city_diet_text},
+            {'text': destination_city_diet_text}
+        ])
 
-        # Step 5: Send the files and prompt to Gemini for analysis
-        response = model.generate_content([responses_path, current_city_diet_path, destination_city_diet_path, prompt])
-        
         # Step 6: Get the analysis from the Gemini response
         analysis_result = response.text
 
