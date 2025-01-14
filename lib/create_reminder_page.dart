@@ -117,32 +117,46 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 5,
         child: Container(
-          height: 400,  // Set a fixed height for the dialog
-          child: SingleChildScrollView(  // Make the dialog content scrollable
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Analysis Result",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75), // Limit dialog height
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  "Analysis Result",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              Divider(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
                     analysisResult,
                     style: TextStyle(fontSize: 16),
                   ),
-                ],
+                ),
               ),
-            ),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 16.0, bottom: 8.0),
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Close',
+                      style: TextStyle(color: Colors.teal),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );
     },
   );
 }
-
 
   // Helper function to load asset to a temporary file
   Future<File> loadAssetToTempFile(String assetPath) async {
@@ -152,6 +166,7 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
     await tempFile.writeAsBytes(byteData.buffer.asUint8List());
     return tempFile;
   }
+
 
   // Process the form data and send to the server
   Future<void> processAndSendData() async {
@@ -238,47 +253,38 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
 
   // Send the data to Gemini for analysis
   Future<void> sendToGemini({
-    required String currentCity,
-    required String destinationCity,
-    required String jsonFilePath,
-    required String currentCityXlsxPath,
-    required String destinationCityXlsxPath,
-  }) async {
-    final uri = Uri.parse("http://192.168.156.94:5000/analyze-travel-health"); // Updated endpoint
-    final request = http.MultipartRequest('POST', uri);
+  required String currentCity,
+  required String destinationCity,
+  required String jsonFilePath,
+  required String currentCityXlsxPath,
+  required String destinationCityXlsxPath,
+}) async {
+  final uri = Uri.parse("http://192.168.156.94:5000/analyze-travel-health"); // Updated endpoint
+  final request = http.MultipartRequest('POST', uri);
 
-    // Attach cities info
-    request.fields['current_city'] = currentCity;
-    request.fields['destination_city'] = destinationCity;
+  // Attach cities info
+  request.fields['current_city'] = currentCity;
+  request.fields['destination_city'] = destinationCity;
 
-    // Attach JSON file with user responses
-    request.files.add(await http.MultipartFile.fromPath('responses', jsonFilePath));
+  // Attach JSON file with user responses
+  request.files.add(await http.MultipartFile.fromPath('responses', jsonFilePath));
 
-    // Attach the city-specific diet files
-    request.files.add(await http.MultipartFile.fromPath('current_city_diet', currentCityXlsxPath));
-    request.files.add(await http.MultipartFile.fromPath('destination_city_diet', destinationCityXlsxPath));
+  // Attach the city-specific diet files
+  request.files.add(await http.MultipartFile.fromPath('current_city_diet', currentCityXlsxPath));
+  request.files.add(await http.MultipartFile.fromPath('destination_city_diet', destinationCityXlsxPath));
 
-    // Send the request
-    final response = await request.send();
-    if (response.statusCode == 200) {
-      // Process the response from the server
-      final responseData = await http.Response.fromStream(response);
-      final analysisResult = jsonDecode(responseData.body)['analysis'];
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text("Analysis Result"),
-          content: Text(analysisResult),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('OK'),
-            ),
-          ],
-        ),
-      );
-    } else {
-      throw Exception("Failed to send data to Gemini. Status code: ${response.statusCode}");
-    }
+  // Send the request
+  final response = await request.send();
+  if (response.statusCode == 200) {
+    // Process the response from the server
+    final responseData = await http.Response.fromStream(response);
+    final analysisResult = jsonDecode(responseData.body)['analysis'];
+
+    // Show the analysis result in a dialog
+    showAnalysisDialog(context, analysisResult);
+  } else {
+    throw Exception("Failed to send data to Gemini. Status code: ${response.statusCode}");
   }
+}
+
 }
