@@ -244,7 +244,7 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
     required String currentCityXlsxPath,
     required String destinationCityXlsxPath,
   }) async {
-    final uri = Uri.parse("http://172.20.160.175:5000/analyze-travel-health"); // Updated endpoint
+    final uri = Uri.parse("http://192.168.156.94:5000/analyze-travel-health"); // Updated endpoint
     final request = http.MultipartRequest('POST', uri);
 
     // Attach cities info
