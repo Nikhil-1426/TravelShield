@@ -17,6 +17,8 @@ class CreateReminderPage extends StatefulWidget {
 class _CreateReminderPageState extends State<CreateReminderPage> {
   String? currentCity;
   String? destinationCity;
+  String analysisResult = "";  // Variable to store the response
+
   final Map<String, String> cityToFileMap = {
     'Mumbai': "assets/mumbai_diet.xlsx",
     'Washington': "assets/washington_diet.xlsx",
@@ -36,21 +38,14 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Current City",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            // Dropdowns for selecting cities
+            Text("Current City", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-              ),
+              decoration: InputDecoration(border: OutlineInputBorder()),
               value: currentCity,
               items: cities.map((city) {
-                return DropdownMenuItem<String>(
-                  value: city,
-                  child: Text(city),
-                );
+                return DropdownMenuItem<String>(value: city, child: Text(city));
               }).toList(),
               onChanged: (value) {
                 setState(() {
@@ -60,21 +55,13 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
               hint: Text("Select Current City"),
             ),
             SizedBox(height: 16),
-            Text(
-              "Destination City",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            Text("Destination City", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-              ),
+              decoration: InputDecoration(border: OutlineInputBorder()),
               value: destinationCity,
               items: cities.map((city) {
-                return DropdownMenuItem<String>(
-                  value: city,
-                  child: Text(city),
-                );
+                return DropdownMenuItem<String>(value: city, child: Text(city));
               }).toList(),
               onChanged: (value) {
                 setState(() {
@@ -87,7 +74,6 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
             Center(
               child: ElevatedButton(
                 onPressed: () async {
-                  // Check if both cities are selected and valid
                   if (currentCity != null &&
                       destinationCity != null &&
                       cityToFileMap.containsKey(currentCity!) &&
@@ -95,23 +81,16 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                     try {
                       await processAndSendData();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                              "Data successfully submitted to Gemini for analysis!"),
-                        ),
+                        SnackBar(content: Text("Data successfully submitted to Gemini for analysis!")),
                       );
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Error: ${e.toString()}"),
-                        ),
+                        SnackBar(content: Text("Error: ${e.toString()}")),
                       );
                     }
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("Please select both cities!"),
-                      ),
+                      SnackBar(content: Text("Please select both cities!")),
                     );
                   }
                 },
@@ -122,20 +101,59 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                 ),
               ),
             ),
+            SizedBox(height: 32),
           ],
         ),
       ),
     );
   }
 
-  Future<File> loadAssetToTempFile(String assetPath) async {
-  final byteData = await rootBundle.load(assetPath); // Load the asset
-  final tempDir = await getTemporaryDirectory(); // Get temporary directory
-  final tempFile = File('${tempDir.path}/${assetPath.split('/').last}');
-  await tempFile.writeAsBytes(byteData.buffer.asUint8List());
-  return tempFile;
+  // Show the result in a Dialog (Popup)
+  void showAnalysisDialog(BuildContext context, String analysisResult) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 5,
+        child: Container(
+          height: 400,  // Set a fixed height for the dialog
+          child: SingleChildScrollView(  // Make the dialog content scrollable
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Analysis Result",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    analysisResult,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
 }
 
+
+  // Helper function to load asset to a temporary file
+  Future<File> loadAssetToTempFile(String assetPath) async {
+    final byteData = await rootBundle.load(assetPath); // Load the asset
+    final tempDir = await getTemporaryDirectory(); // Get temporary directory
+    final tempFile = File('${tempDir.path}/${assetPath.split('/').last}');
+    await tempFile.writeAsBytes(byteData.buffer.asUint8List());
+    return tempFile;
+  }
+
+  // Process the form data and send to the server
   Future<void> processAndSendData() async {
     // 1. Fetch responses from Firestore
     final responses = await fetchUserResponses();
@@ -149,95 +167,118 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
 
     // 4. Send data to Gemini
     await sendToGemini(
+      currentCity: currentCity!,
+      destinationCity: destinationCity!,
       jsonFilePath: jsonFilePath,
       currentCityXlsxPath: currentCityTempFile.path,
-    destinationCityXlsxPath: destinationCityTempFile.path,
+      destinationCityXlsxPath: destinationCityTempFile.path,
     );
   }
 
+  // Fetch user responses from Firestore
   Future<Map<String, dynamic>> fetchUserResponses() async {
-  try {
-    final querySnapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc('84p0YtbVEVNpzwgOcOokGJWz0Wf2')
-        .collection('questionnaireResponses')
-        .orderBy('completedAt', descending: true)  // Order by completion timestamp
-        .limit(1)  // Get most recent document
-        .get();
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc('84p0YtbVEVNpzwgOcOokGJWz0Wf2')
+          .collection('questionnaireResponses')
+          .orderBy('completedAt', descending: true)  // Order by completion timestamp
+          .limit(1)  // Get most recent document
+          .get();
 
-    if (querySnapshot.docs.isNotEmpty) {
-      final data = querySnapshot.docs.first.data();
-      return {
-        'success': true,
-        'responses': data['responses'] ?? [],
-      };
-    } else {
-      print('No documents found for UID: ${widget.uid}');  // Debug print
-      throw Exception("No questionnaire responses found.");
+      if (querySnapshot.docs.isNotEmpty) {
+        final data = querySnapshot.docs.first.data();
+        return {
+          'success': true,
+          'responses': data['responses'] ?? [],
+        };
+      } else {
+        print('No documents found for UID: ${widget.uid}');  // Debug print
+        throw Exception("No questionnaire responses found.");
+      }
+    } catch (e) {
+      print('Error fetching responses: $e');  // Debug print
+      throw Exception("Error fetching responses: ${e.toString()}");
     }
-  } catch (e) {
-    print('Error fetching responses: $e');  // Debug print
-    throw Exception("Error fetching responses: ${e.toString()}");
   }
-}
 
+  // Generate a JSON file from the responses
   Future<String> generateJsonFile(Map<String, dynamic> responses) async {
-  try {
-    final directory = await getApplicationDocumentsDirectory();
-    final filePath = '${directory.path}/user_responses.json';
-    final file = File(filePath);
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final filePath = '${directory.path}/user_responses.json';
+      final file = File(filePath);
 
-    // Check if the file already exists
-    if (file.existsSync()) {
-      print("File already exists at $filePath");
-    } else {
-      print("File does not exist. Creating file at $filePath");
+      // Check if the file already exists
+      if (file.existsSync()) {
+        print("File already exists at $filePath");
+      } else {
+        print("File does not exist. Creating file at $filePath");
+      }
+
+      // Write the responses to the file
+      await file.writeAsString(jsonEncode(responses));
+
+      // Log the file path to confirm
+      print("JSON file created at: $filePath");
+
+      // Check if the file was created successfully
+      if (file.existsSync()) {
+        print("File successfully created at $filePath");
+      } else {
+        print("Failed to create file at $filePath");
+      }
+
+      return filePath;
+    } catch (e) {
+      print('Error generating JSON file: $e');
+      throw Exception("Error generating JSON file: ${e.toString()}");
     }
-
-    // Write the responses to the file
-    await file.writeAsString(jsonEncode(responses));
-
-    // Log the file path to confirm
-    print("JSON file created at: $filePath");
-
-    // Check if the file was created successfully
-    if (file.existsSync()) {
-      print("File successfully created at $filePath");
-    } else {
-      print("Failed to create file at $filePath");
-    }
-
-    return filePath;
-  } catch (e) {
-    print('Error generating JSON file: $e');
-    throw Exception("Error generating JSON file: ${e.toString()}");
   }
-}
 
-
+  // Send the data to Gemini for analysis
   Future<void> sendToGemini({
+    required String currentCity,
+    required String destinationCity,
     required String jsonFilePath,
     required String currentCityXlsxPath,
     required String destinationCityXlsxPath,
   }) async {
-    final uri = Uri.parse("http://127.0.0.1:5000/process-travel-health");
+    final uri = Uri.parse("http://172.20.160.175:5000/analyze-travel-health"); // Updated endpoint
     final request = http.MultipartRequest('POST', uri);
 
-    // Attach JSON file
-    request.files
-        .add(await http.MultipartFile.fromPath('responses', jsonFilePath));
+    // Attach cities info
+    request.fields['current_city'] = currentCity;
+    request.fields['destination_city'] = destinationCity;
 
-    // Attach current and destination city dietary files
-    request.files.add(
-        await http.MultipartFile.fromPath('current_city', currentCityXlsxPath));
-    request.files.add(await http.MultipartFile.fromPath(
-        'destination_city', destinationCityXlsxPath));
+    // Attach JSON file with user responses
+    request.files.add(await http.MultipartFile.fromPath('responses', jsonFilePath));
+
+    // Attach the city-specific diet files
+    request.files.add(await http.MultipartFile.fromPath('current_city_diet', currentCityXlsxPath));
+    request.files.add(await http.MultipartFile.fromPath('destination_city_diet', destinationCityXlsxPath));
 
     // Send the request
     final response = await request.send();
-    if (response.statusCode != 200) {
-      throw Exception(
-          "Failed to send data to Gemini. Status code: ${response.statusCode}");
+    if (response.statusCode == 200) {
+      // Process the response from the server
+      final responseData = await http.Response.fromStream(response);
+      final analysisResult = jsonDecode(responseData.body)['analysis'];
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Analysis Result"),
+          content: Text(analysisResult),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      throw Exception("Failed to send data to Gemini. Status code: ${response.statusCode}");
     }
   }
 }
