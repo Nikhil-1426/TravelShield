@@ -3,6 +3,7 @@ from flask_cors import CORS
 import google.generativeai as genai
 import os
 import pandas as pd
+import json
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -84,6 +85,37 @@ def analyze_travel_health():
 
         # Step 7: Return the analysis as JSON response
         return jsonify({'analysis': analysis_result})
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+    
+
+
+@app.route('/summarize', methods=['POST'])
+def summarize():
+    try:
+        # Parse JSON data from the request
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid JSON data"}), 400
+
+        # Create a summarization prompt
+        prompt = (
+            f"Summarize the following responses:\n"
+            f"{json.dumps(data.get('responses', []), indent=2)}\n\n"
+            f"Provide a concise summary of the user's responses, highlighting key points. Keep the summary under 200 words."
+        )
+
+        # Send the text and prompt to Gemini for summarization
+        model = genai.GenerativeModel('gemini-1.5-pro')
+        response = model.generate_content([{'text': prompt}])
+
+        # Get the summary from the Gemini response
+        summary_result = response.text
+
+        # Return the summary as JSON response
+        return jsonify({'summary': summary_result})
 
     except Exception as e:
         print(f"Error: {str(e)}")

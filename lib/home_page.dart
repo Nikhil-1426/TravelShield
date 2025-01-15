@@ -1,13 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'track_health_page.dart';
 import 'create_reminder_page.dart';
 import 'settings_page.dart';
 import 'health_history_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   final String uid;
 
   const HomePage({Key? key, required this.uid}) : super(key: key);
+
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String? summaryText; // To store the fetched summary
+  bool isLoadingSummary = true; // To show a loading indicator
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSummary();
+  }
+
+  Future<void> _fetchSummary() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.uid)
+          .collection('summaries')
+          .orderBy('generatedAt', descending: true)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        setState(() {
+          summaryText = snapshot.docs.first['summary'] as String;
+          isLoadingSummary = false;
+        });
+      } else {
+        setState(() {
+          summaryText = "No summary available yet.";
+          isLoadingSummary = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        summaryText = "Failed to load summary.";
+        isLoadingSummary = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +121,54 @@ class HomePage extends StatelessWidget {
                   ],
                 ),
               ),
+              // Summary Section
+              if (isLoadingSummary)
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation(Colors.white),
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Card(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    elevation: 6,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Latest Summary',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.teal,
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Container(
+                            height: 200, // Adjust height as needed
+                            child: SingleChildScrollView(
+                              child: Text(
+                                summaryText ?? 'No summary available.',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -97,7 +189,7 @@ class HomePage extends StatelessWidget {
                         title: 'Create Reminder',
                         icon: Icons.alarm_add,
                         color: Colors.purple,
-                        destination: CreateReminderPage(uid: uid), // Pass UID
+                        destination: CreateReminderPage(uid: widget.uid),
                       ),
                       _buildFeatureCard(
                         context,
