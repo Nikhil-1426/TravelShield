@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
 
-class SettingsPage extends StatelessWidget {
+class ProfilePage extends StatelessWidget {
   final String uid;  // Add a final variable to store the passed uid
-
-  // Update the constructor to require the uid
-  const SettingsPage({Key? key, required this.uid}) : super(key: key); 
+  const ProfilePage({Key? key, required this.uid}) : super(key: key); 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Settings"),
+        title: Text("Profile"),
         backgroundColor: Colors.teal,
       ),
       body: Center(
         child: Text(
-          "Configure your app settings here.",
+          "This is your profile.",
           style: TextStyle(fontSize: 24),
         ),
       ),

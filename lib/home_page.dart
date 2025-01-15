@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'track_health_page.dart';
 import 'create_reminder_page.dart';
 import 'settings_page.dart';
 import 'health_history_page.dart';
+import 'profile_page.dart';
 
 class HomePage extends StatefulWidget {
   final String uid;
@@ -182,7 +185,7 @@ class _HomePageState extends State<HomePage> {
                         title: 'Track Health',
                         icon: Icons.fitness_center,
                         color: Colors.orange,
-                        destination: TrackHealthPage(),
+                        destination: TrackHealthPage(uid: widget.uid),
                       ),
                       _buildFeatureCard(
                         context,
@@ -196,14 +199,14 @@ class _HomePageState extends State<HomePage> {
                         title: 'Settings',
                         icon: Icons.settings,
                         color: Colors.blue,
-                        destination: SettingsPage(),
+                        destination: SettingsPage(uid: widget.uid),
                       ),
                       _buildFeatureCard(
                         context,
                         title: 'Health History',
                         icon: Icons.history,
                         color: Colors.green,
-                        destination: HealthHistoryPage(),
+                        destination: HealthHistoryPage(uid: widget.uid),
                       ),
                     ],
                   ),
@@ -212,6 +215,42 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: CurvedNavigationBar(
+        index: 1, // Home page selected by default
+        items: <Widget>[
+          Icon(Icons.person, size: 30, color: Colors.white), // Profile icon
+          Icon(Icons.home, size: 30, color: Colors.white),   // Home icon
+          Icon(Icons.settings, size: 30, color: Colors.white), // Settings icon
+        ],
+        color: Colors.teal,
+        buttonBackgroundColor: Colors.tealAccent,
+        backgroundColor: Colors.white,
+        animationCurve: Curves.easeInOut,
+        animationDuration: Duration(milliseconds: 300),
+
+
+        onTap: (index) {
+          String uid = FirebaseAuth.instance.currentUser?.uid ?? 'default-uid';
+          if (index == 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ProfilePage(uid: uid)),
+            );
+          }
+          else if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => HomePage(uid: uid)),
+            );
+          }
+          else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SettingsPage(uid: uid)),
+            );
+          }
+        },
       ),
     );
   }
