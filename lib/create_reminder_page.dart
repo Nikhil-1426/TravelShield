@@ -195,7 +195,7 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
     try {
       final querySnapshot = await FirebaseFirestore.instance
           .collection('users')
-          .doc('84p0YtbVEVNpzwgOcOokGJWz0Wf2')
+          .doc(widget.uid)
           .collection('questionnaireResponses')
           .orderBy('completedAt', descending: true)  // Order by completion timestamp
           .limit(1)  // Get most recent document
