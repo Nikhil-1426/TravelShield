@@ -67,7 +67,7 @@ def analyze_travel_health():
             f"1. User responses (plain text).\n"
             f"2. Diet information for {current_city} (CSV format).\n"
             f"3. Diet information for {destination_city} (CSV format).\n\n"
-            f"Provide a detailed analysis of dietary precautions, health considerations, and weather-related advice."
+            f"Provide a concise analysis covering only the following points: 1. Diet Recommendations: Tailored dietary advice for the destination based on the user’s health responses and city-specific diet data. 2. General Precautions: Guidance for adapting to locational and seasonal changes, focusing on health and safety. 3. Weather Recommendations: Advice on how the user should prepare for weather conditions in the destination. Ensure the output is clear, actionable, and user-friendly.."
         )
 
         # Step 5: Send the text and prompt to Gemini for analysis
