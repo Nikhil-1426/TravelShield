@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart'; // Import percent_indicator package
 import 'track_health_page.dart';
 import 'create_reminder_page.dart';
 import 'settings_page.dart';
@@ -17,11 +18,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String? summaryText; // To store the fetched summary
   bool isLoadingSummary = true; // To show a loading indicator
+  double? healthScore; // To store the health score
 
   @override
   void initState() {
     super.initState();
     _fetchSummary();
+    _fetchHealthScore();
   }
 
   Future<void> _fetchSummary() async {
@@ -49,6 +52,32 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         summaryText = "Failed to load summary.";
         isLoadingSummary = false;
+      });
+    }
+  }
+
+  Future<void> _fetchHealthScore() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.uid)
+          .collection('healthScores')
+          .orderBy('generatedAt', descending: true)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        setState(() {
+          healthScore = snapshot.docs.first['healthScore'] as double?;
+        });
+      } else {
+        setState(() {
+          healthScore = 0.0; // If no score available
+        });
+      }
+    } catch (e) {
+      setState(() {
+        healthScore = 0.0; // In case of failure to fetch health score
       });
     }
   }
@@ -120,6 +149,29 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
+              ),
+              // Health Score Section (Circular Graph)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20.0),
+                child: healthScore == null
+                    ? CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      )
+                    : CircularPercentIndicator(
+                        radius: 100.0,
+                        lineWidth: 10.0,
+                        percent: healthScore! / 100,
+                        center: Text(
+                          "${healthScore?.toStringAsFixed(1)}%",
+                          style: TextStyle(
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.teal,
+                          ),
+                        ),
+                        progressColor: Colors.green,
+                        backgroundColor: Colors.white,
+                      ),
               ),
               // Summary Section
               if (isLoadingSummary)
