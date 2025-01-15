@@ -3,6 +3,8 @@ import 'package:health_passport/home_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http; // For making HTTP requests
+import 'dart:convert';
 
 class Question {
   final String questionText;
@@ -625,7 +627,7 @@ class _DynamicQuestionnaireState extends State<DynamicQuestionnaire> {
       }).toList();
 
       // Store responses with metadata
-      await _firestore
+      DocumentReference responseDoc = await _firestore
           .collection('users')
           .doc(widget.uid)
           .collection('questionnaireResponses')
@@ -634,6 +636,27 @@ class _DynamicQuestionnaireState extends State<DynamicQuestionnaire> {
         'completedAt': Timestamp.now(),
         'deviceInfo': await _getDeviceInfo(),
       });
+
+      final jsonData = {
+      'responses': responses,
+      'userId': widget.uid,
+      'completedAt': DateTime.now().toIso8601String(),
+    };
+
+      final summary = await _getSummaryFromGemini(jsonData);
+
+    // Save the summary in Firestore
+    if (summary != null) {
+      await _firestore
+          .collection('users')
+          .doc(widget.uid)
+          .collection('summaries')
+          .doc(responseDoc.id)
+          .set({
+        'summary': summary,
+        'generatedAt': Timestamp.now(),
+      });
+    }
 
       widget.onComplete?.call(); // Trigger completion callback
 
@@ -655,6 +678,28 @@ class _DynamicQuestionnaireState extends State<DynamicQuestionnaire> {
         isSubmitting = false;
       });
     }
+  }
+
+  Future<String?> _getSummaryFromGemini(Map<String, dynamic> jsonData) async {
+  try {
+    // Replace with your actual Gemini API endpoint
+    final uri = Uri.parse('http://192.168.156.197:5000/summarize');
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(jsonData),
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      return responseData['summary']; // Assuming 'summary' key contains the summary text
+    } else {
+      debugPrint('Failed to get summary: ${response.body}');
+    }
+  } catch (e) {
+    debugPrint('Error during summary generation: $e');
+  }
+  return null;
   }
 
   Future<Map<String, dynamic>> _getDeviceInfo() async {
