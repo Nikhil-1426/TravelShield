@@ -121,5 +121,36 @@ def summarize():
         print(f"Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/generalized-health-score', methods=['POST'])
+def health_score():
+    try:
+        # Parse JSON data from the request
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid JSON data"}), 400
+
+        # Create a prompt to generate the health score
+        prompt = (
+            f"Based on the following user responses, generate a health score on a scale of 0.00 to 10.00:\n"
+            f"{json.dumps(data.get('responses', []), indent=2)}\n\n"
+            f"Return the score as a decimal number between 0.00 and 10.00. Make sure to keep the score precise to two decimal places."
+        )
+
+        # Send the text and prompt to Gemini for analysis
+        model = genai.GenerativeModel('gemini-1.5-pro')
+        response = model.generate_content([{'text': prompt}])
+
+        # Get the health score from the Gemini response
+        health_score = response.text.strip()
+
+        # Return the health score as JSON response
+        return jsonify({'health_score': health_score})
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
