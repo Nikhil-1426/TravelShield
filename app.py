@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Initialize the Gemini API with your API key
-api_key = "AIzaSyBvPXyV7EzQGMSub6Iz0OJNVZnOFiW6JzI"
+api_key = "AIzaSyBoMOD0t8PEM0lQ1yZV5wwirevfXEc88UQ"
 genai.configure(api_key=api_key)
 
 # Directory to save uploaded files temporarily
@@ -92,11 +92,87 @@ def analyze_travel_health():
     
 
 
+@app.route('/travel-health-score', methods=['POST'])
+def travel_health_score():
+    try:
+        # Step 1: Get cities from the request
+        current_city = request.form.get('current_city')
+        destination_city = request.form.get('destination_city')
+
+        if not current_city or not destination_city:
+            return jsonify({"error": "Missing current or destination city"}), 400
+
+        # Step 2: Handle uploaded files
+        if 'responses' not in request.files or 'current_city_diet' not in request.files or 'destination_city_diet' not in request.files:
+            return jsonify({"error": "Missing necessary files"}), 400
+
+        # Save the uploaded files
+        responses_file = request.files['responses']
+        current_city_diet_file = request.files['current_city_diet']
+        destination_city_diet_file = request.files['destination_city_diet']
+
+        responses_path = os.path.join(UPLOAD_FOLDER, 'responses.json')
+        current_city_diet_path = os.path.join(UPLOAD_FOLDER, f'{current_city}_diet.xlsx')
+        destination_city_diet_path = os.path.join(UPLOAD_FOLDER, f'{destination_city}_diet.xlsx')
+
+        responses_file.save(responses_path)
+        current_city_diet_file.save(current_city_diet_path)
+        destination_city_diet_file.save(destination_city_diet_path)
+
+        # Step 3: Convert files to supported formats
+        # Convert JSON to plain text
+        with open(responses_path, 'r') as responses_file:
+            responses_content = responses_file.read()
+
+        # Convert Excel to plain text (Markdown or CSV)
+        current_city_diet = pd.read_excel(current_city_diet_path)
+        current_city_diet_text = current_city_diet.to_csv(index=False)
+
+        destination_city_diet = pd.read_excel(destination_city_diet_path)
+        destination_city_diet_text = destination_city_diet.to_csv(index=False)
+
+        # Step 4: Create a prompt for the analysis
+        prompt = (
+        f"Based on the following travel scenario, calculate a Travel Health Score on a scale of 0.00 to 10.00:\n"
+        f"- Current city: {current_city}\n"
+        f"- Destination city: {destination_city}\n\n"
+        f"Attached are:\n"
+        f"1. User responses (plain text).\n"
+        f"2. Diet information for {current_city} (CSV format).\n"
+        f"3. Diet information for {destination_city} (CSV format).\n\n"
+        f"Consider the following factors in your calculation:\n"
+        f"- The user's health conditions, including chronic issues and sensitivities.\n"
+        f"- The dietary compatibility between the user and the destination city's typical diet compared to the current city.\n"
+        f"- The user's adaptability to the destination city's weather conditions.\n"
+        f"- Any potential risks or benefits associated with the travel scenario.\n\n"
+        f"Please provide a single numerical output as a decimal value between 0.00 and 10.00. For example: 8.29 or 5.63.\n"
+        f"Do not include any explanation or extra text, only return the value. Nothing else should be included in the response."
+    )
+
+        # Step 5: Send the text and prompt to Gemini for analysis
+        model = genai.GenerativeModel('gemini-1.5-pro')
+        response = model.generate_content([
+            {'text': prompt},
+            {'text': responses_content},
+            {'text': current_city_diet_text},
+            {'text': destination_city_diet_text}
+        ])
+
+        travel_health_score = response.text.strip()
+        return jsonify({'travelHealthScore': travel_health_score})
+        
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+
 @app.route('/summarize', methods=['POST'])
 def summarize():
     try:
         # Parse JSON data from the request
         data = request.get_json()
+        user_id = data.get('user_id')
         if not data:
             return jsonify({"error": "Invalid JSON data"}), 400
 
@@ -113,8 +189,6 @@ def summarize():
 
         # Get the summary from the Gemini response
         summary_result = response.text
-
-        # Return the summary as JSON response
         return jsonify({'summary': summary_result})
 
     except Exception as e:
@@ -122,20 +196,30 @@ def summarize():
         return jsonify({'error': str(e)}), 500
 
 
+
 @app.route('/generalized-health-score', methods=['POST'])
 def health_score():
     try:
         # Parse JSON data from the request
         data = request.get_json()
+        user_id = data.get('user_id')
         if not data:
             return jsonify({"error": "Invalid JSON data"}), 400
 
         # Create a prompt to generate the health score
         prompt = (
-            f"Based on the following user responses, generate a health score on a scale of 0.00 to 10.00:\n"
-            f"{json.dumps(data.get('responses', []), indent=2)}\n\n"
-            f"Return the score as a decimal number between 0.00 and 10.00. Make sure to keep the score precise to two decimal places."
-        )
+        f"Based on the following user responses, generate a health score on a scale of 0.00 to 10.00:\n"
+        f"{json.dumps(data.get('responses', []), indent=2)}\n\n"
+        f"Use the following guidelines for generating the health score:\n"
+        f"1. **Health Factors**: Consider conditions such as chronic diseases (e.g., diabetes, heart disease), past surgeries, and mental health. These conditions will impact the score based on their severity.\n"
+        f"2. **Positive Responses**: Conditions like 'No' answers or lack of symptoms should increase the score.\n"
+        f"3. **Negative Responses**: Conditions like 'Yes' answers to serious health issues (e.g., stroke, cancer) should decrease the score, but avoid extreme deductions.\n"
+        f"4. **Score Range**: The score should range between 0.00 (worst) and 10.00 (best), with intermediate values depending on the severity and combination of conditions.\n"
+        f"5. **Avoid extreme deductions**: Try to keep the score above 0.00 and reflect the overall health status. For example, if multiple severe conditions are reported, the score should reflect that but not go below 3.00 unless the conditions are extreme.\n"
+        f"6. **Precision**: Keep the score precise to two decimal places.\n\n"
+        f"Return only the score as a decimal number between 0.00 and 10.00. Example: 7.58 or 6.25 or 8.09"
+        f"Try not to keep the second decimal place as 0"
+    )
 
         # Send the text and prompt to Gemini for analysis
         model = genai.GenerativeModel('gemini-1.5-pro')
@@ -143,10 +227,8 @@ def health_score():
 
         # Get the health score from the Gemini response
         health_score = response.text.strip()
-
-        # Return the health score as JSON response
-        return jsonify({'health_score': health_score})
-
+        return jsonify({'healthScore': health_score})
+        
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({'error': str(e)}), 500

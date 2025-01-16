@@ -576,17 +576,22 @@ class _DynamicQuestionnaireState extends State<DynamicQuestionnaire> {
   Future<void> _loadQuestions() async {
     // Check if there's a saved session
     final prefs = await SharedPreferences.getInstance();
-    final savedIndex = prefs.getInt('currentQuestionIndex') ?? 0;
+    final savedIndex = prefs.getInt('${widget.uid}_currentQuestionIndex') ?? 0;
+    final hasCompleted = prefs.getBool('${widget.uid}_hasCompletedQuestionnaire') ?? false;
 
     setState(() {
       displayedQuestions = questions.where((q) => !q.isFollowUp).toList();
       currentQuestionIndex = savedIndex;
+
+    if (hasCompleted) {
+      currentQuestionIndex = displayedQuestions.length;
+    }
     });
   }
 
   Future<void> _saveProgress() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('currentQuestionIndex', currentQuestionIndex);
+    await prefs.setInt('${widget.uid}_currentQuestionIndex', currentQuestionIndex);
   }
 
   void onAnswer(String response) async {
@@ -625,7 +630,7 @@ class _DynamicQuestionnaireState extends State<DynamicQuestionnaire> {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('hasCompletedQuestionnaire', true);
+      await prefs.setBool('${widget.uid}_hasCompletedQuestionnaire', true);
 
       // Prepare data with categories and timestamps
       List<Map<String, dynamic>> responses = displayedQuestions
@@ -722,20 +727,32 @@ class _DynamicQuestionnaireState extends State<DynamicQuestionnaire> {
   }
 
   // Call the /health-score endpoint
-  Future<double?> _getHealthScore(Map<String, dynamic> jsonData) async {
+    Future<double?> _getHealthScore(Map<String, dynamic> jsonData) async {
     final url = Uri.parse(
-        'http://192.168.76.29:5000/generalized-health-score'); // Replace with actual URL
-    final response = await http.post(url,
-        body: json.encode(jsonData),
-        headers: {'Content-Type': 'application/json'});
+      'http://192.168.76.29:5000/generalized-health-score', // Replace with actual URL
+    );
+    
+    try {
+      final response = await http.post(url,
+          body: json.encode(jsonData),
+          headers: {'Content-Type': 'application/json'});
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return data['healthScore'] as double?;
-    } else {
-      // Handle error
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        var healthScore = data['healthScore'];
+        
+        if (healthScore is String) {
+          return double.tryParse(healthScore); // safely parse the string to double
+        } else if (healthScore is double) {
+          return healthScore; // if it's already a double, return it directly
+        }
+      } else {
+        return null;
+      }
+    } catch (e) {
       return null;
     }
+    return null;
   }
 
   // Call the /summarize endpoint

@@ -17,7 +17,8 @@ class CreateReminderPage extends StatefulWidget {
 class _CreateReminderPageState extends State<CreateReminderPage> {
   String? currentCity;
   String? destinationCity;
-  String analysisResult = "";  // Variable to store the response
+  String analysisResult = ""; // Variable to store the analysis result
+  String travelHealthScore = ""; // Variable to store the travel health score
 
   final Map<String, String> cityToFileMap = {
     'Mumbai': "assets/mumbai_diet.xlsx",
@@ -30,7 +31,7 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Create Reminder"),
+        title: const Text("Create Reminder"),
         backgroundColor: Colors.teal,
       ),
       body: Padding(
@@ -38,11 +39,11 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Dropdowns for selecting cities
-            Text("Current City", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
+            const Text("Current City",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              decoration: InputDecoration(border: OutlineInputBorder()),
+              decoration: const InputDecoration(border: OutlineInputBorder()),
               value: currentCity,
               items: cities.map((city) {
                 return DropdownMenuItem<String>(value: city, child: Text(city));
@@ -52,13 +53,14 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                   currentCity = value;
                 });
               },
-              hint: Text("Select Current City"),
+              hint: const Text("Select Current City"),
             ),
-            SizedBox(height: 16),
-            Text("Destination City", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
+            const SizedBox(height: 16),
+            const Text("Destination City",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              decoration: InputDecoration(border: OutlineInputBorder()),
+              decoration: const InputDecoration(border: OutlineInputBorder()),
               value: destinationCity,
               items: cities.map((city) {
                 return DropdownMenuItem<String>(value: city, child: Text(city));
@@ -68,9 +70,9 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                   destinationCity = value;
                 });
               },
-              hint: Text("Select Destination City"),
+              hint: const Text("Select Destination City"),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
             Center(
               child: ElevatedButton(
                 onPressed: () async {
@@ -79,10 +81,13 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                       cityToFileMap.containsKey(currentCity!) &&
                       cityToFileMap.containsKey(destinationCity!)) {
                     try {
-                      await processAndSendData();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Data successfully submitted to Gemini for analysis!")),
+                        const SnackBar(
+                            content: Text(
+                                "Data successfully submitted for analysis!")),
                       );
+                      await processAndSendData();
+                      await calculateTravelHealthScore();
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text("Error: ${e.toString()}")),
@@ -90,97 +95,81 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                     }
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Please select both cities!")),
+                      const SnackBar(content: Text("Please select both cities!")),
                     );
                   }
                 },
-                child: Text("Submit"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
-                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                 ),
+                child: const Text("Submit"),
               ),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
+            const Text("Analysis Result",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Container(
+              height: 160,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: analysisResult.isEmpty
+                  ? const Center(child: Text("No analysis yet"))
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.all(8),
+                      child: Text(
+                        analysisResult,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 32),
+            const Text("Travel Health Score",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Container(
+              height: 80,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: travelHealthScore.isEmpty
+                    ? const Text("No health score calculated yet")
+                    : Text(
+                        "Your Travel Health Score: $travelHealthScore",
+                        style: const TextStyle(fontSize: 18),
+                      ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  // Show the result in a Dialog (Popup)
-  void showAnalysisDialog(BuildContext context, String analysisResult) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 5,
-        child: Container(
-          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75), // Limit dialog height
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  "Analysis Result",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              Divider(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    analysisResult,
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 16.0, bottom: 8.0),
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Close',
-                      style: TextStyle(color: Colors.teal),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
-}
-
-  // Helper function to load asset to a temporary file
   Future<File> loadAssetToTempFile(String assetPath) async {
-    final byteData = await rootBundle.load(assetPath); // Load the asset
-    final tempDir = await getTemporaryDirectory(); // Get temporary directory
+    final byteData = await rootBundle.load(assetPath);
+    final tempDir = await getTemporaryDirectory();
     final tempFile = File('${tempDir.path}/${assetPath.split('/').last}');
     await tempFile.writeAsBytes(byteData.buffer.asUint8List());
     return tempFile;
   }
 
-
-  // Process the form data and send to the server
   Future<void> processAndSendData() async {
-    // 1. Fetch responses from Firestore
     final responses = await fetchUserResponses();
-
-    // 2. Convert to JSON file
     final jsonFilePath = await generateJsonFile(responses);
+    final currentCityTempFile =
+        await loadAssetToTempFile(cityToFileMap[currentCity]!);
+    final destinationCityTempFile =
+        await loadAssetToTempFile(cityToFileMap[destinationCity]!);
 
-    // 3. Get city-specific diet files based on the selected cities
-    final currentCityTempFile = await loadAssetToTempFile(cityToFileMap[currentCity]!);
-    final destinationCityTempFile = await loadAssetToTempFile(cityToFileMap[destinationCity]!);
-
-    // 4. Send data to Gemini
     await sendToGemini(
       currentCity: currentCity!,
       destinationCity: destinationCity!,
@@ -190,101 +179,94 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
     );
   }
 
-  // Fetch user responses from Firestore
   Future<Map<String, dynamic>> fetchUserResponses() async {
-    try {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.uid)
-          .collection('questionnaireResponses')
-          .orderBy('completedAt', descending: true)  // Order by completion timestamp
-          .limit(1)  // Get most recent document
-          .get();
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.uid)
+        .collection('questionnaireResponses')
+        .orderBy('completedAt', descending: true)
+        .limit(1)
+        .get();
 
-      if (querySnapshot.docs.isNotEmpty) {
-        final data = querySnapshot.docs.first.data();
-        return {
-          'success': true,
-          'responses': data['responses'] ?? [],
-        };
-      } else {
-        print('No documents found for UID: ${widget.uid}');  // Debug print
-        throw Exception("No questionnaire responses found.");
-      }
-    } catch (e) {
-      print('Error fetching responses: $e');  // Debug print
-      throw Exception("Error fetching responses: ${e.toString()}");
+    if (querySnapshot.docs.isNotEmpty) {
+      final data = querySnapshot.docs.first.data();
+      return {
+        'success': true,
+        'responses': data['responses'] ?? [],
+      };
+    } else {
+      throw Exception("No questionnaire responses found.");
     }
   }
 
-  // Generate a JSON file from the responses
   Future<String> generateJsonFile(Map<String, dynamic> responses) async {
-    try {
-      final directory = await getApplicationDocumentsDirectory();
-      final filePath = '${directory.path}/user_responses.json';
-      final file = File(filePath);
+    final directory = await getApplicationDocumentsDirectory();
+    final filePath = '${directory.path}/user_responses.json';
+    final file = File(filePath);
+    await file.writeAsString(jsonEncode(responses));
+    return filePath;
+  }
 
-      // Check if the file already exists
-      if (file.existsSync()) {
-        print("File already exists at $filePath");
-      } else {
-        print("File does not exist. Creating file at $filePath");
-      }
+  Future<void> calculateTravelHealthScore() async {
+    final responses = await fetchUserResponses();
+    final jsonFilePath = await generateJsonFile(responses);
+    final currentCityTempFile =
+        await loadAssetToTempFile(cityToFileMap[currentCity]!);
+    final destinationCityTempFile =
+        await loadAssetToTempFile(cityToFileMap[destinationCity]!);
 
-      // Write the responses to the file
-      await file.writeAsString(jsonEncode(responses));
+    final uri = Uri.parse("http://192.168.76.29:5000/travel-health-score");
+    final request = http.MultipartRequest('POST', uri);
 
-      // Log the file path to confirm
-      print("JSON file created at: $filePath");
+    request.fields['current_city'] = currentCity!;
+    request.fields['destination_city'] = destinationCity!;
+    request.files.add(await http.MultipartFile.fromPath('responses', jsonFilePath));
+    request.files.add(await http.MultipartFile.fromPath(
+        'current_city_diet', currentCityTempFile.path));
+    request.files.add(await http.MultipartFile.fromPath(
+        'destination_city_diet', destinationCityTempFile.path));
 
-      // Check if the file was created successfully
-      if (file.existsSync()) {
-        print("File successfully created at $filePath");
-      } else {
-        print("Failed to create file at $filePath");
-      }
+    final response = await request.send();
+    final responseData = await http.Response.fromStream(response);
 
-      return filePath;
-    } catch (e) {
-      print('Error generating JSON file: $e');
-      throw Exception("Error generating JSON file: ${e.toString()}");
+    if (response.statusCode == 200) {
+      setState(() {
+        travelHealthScore = jsonDecode(responseData.body)['travelHealthScore'];
+      });
+    } else {
+      throw Exception(
+          "Failed to calculate travel health score. Status code: ${response.statusCode}");
     }
   }
 
-  // Send the data to Gemini for analysis
   Future<void> sendToGemini({
-  required String currentCity,
-  required String destinationCity,
-  required String jsonFilePath,
-  required String currentCityXlsxPath,
-  required String destinationCityXlsxPath,
-}) async {
-  final uri = Uri.parse("http://192.168.76.29:5000/analyze-travel-health"); // Updated endpoint
-  final request = http.MultipartRequest('POST', uri);
+    required String currentCity,
+    required String destinationCity,
+    required String jsonFilePath,
+    required String currentCityXlsxPath,
+    required String destinationCityXlsxPath,
+  }) async {
+    final uri = Uri.parse("http://192.168.76.29:5000/analyze-travel-health");
+    final request = http.MultipartRequest('POST', uri);
 
-  // Attach cities info
-  request.fields['current_city'] = currentCity;
-  request.fields['destination_city'] = destinationCity;
+    request.fields['current_city'] = currentCity;
+    request.fields['destination_city'] = destinationCity;
+    request.files
+        .add(await http.MultipartFile.fromPath('responses', jsonFilePath));
+    request.files.add(await http.MultipartFile.fromPath(
+        'current_city_diet', currentCityXlsxPath));
+    request.files.add(await http.MultipartFile.fromPath(
+        'destination_city_diet', destinationCityXlsxPath));
 
-  // Attach JSON file with user responses
-  request.files.add(await http.MultipartFile.fromPath('responses', jsonFilePath));
-
-  // Attach the city-specific diet files
-  request.files.add(await http.MultipartFile.fromPath('current_city_diet', currentCityXlsxPath));
-  request.files.add(await http.MultipartFile.fromPath('destination_city_diet', destinationCityXlsxPath));
-
-  // Send the request
-  final response = await request.send();
-  if (response.statusCode == 200) {
-    // Process the response from the server
+    final response = await request.send();
     final responseData = await http.Response.fromStream(response);
-    final analysisResult = jsonDecode(responseData.body)['analysis'];
 
-    // Show the analysis result in a dialog
-    showAnalysisDialog(context, analysisResult);
-  } else {
-    throw Exception("Failed to send data to Gemini. Status code: ${response.statusCode}");
+    if (response.statusCode == 200) {
+      setState(() {
+        analysisResult = jsonDecode(responseData.body)['analysis'];
+      });
+    } else {
+      throw Exception("Failed to send data to Gemini.");
+    }
   }
-}
-
 }
