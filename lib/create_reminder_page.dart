@@ -17,8 +17,8 @@ class CreateReminderPage extends StatefulWidget {
 class _CreateReminderPageState extends State<CreateReminderPage> {
   String? currentCity;
   String? destinationCity;
-  String analysisResult = ""; // Variable to store the analysis result
-  String travelHealthScore = ""; // Variable to store the travel health score
+  String analysisResult = ""; // Analysis result variable
+  String travelHealthScore = ""; // Health score variable
 
   final Map<String, String> cityToFileMap = {
     'Mumbai': "assets/mumbai_diet.xlsx",
@@ -87,7 +87,6 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                                 "Data successfully submitted for analysis!")),
                       );
                       await processAndSendData();
-                      await calculateTravelHealthScore();
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text("Error: ${e.toString()}")),
@@ -205,38 +204,6 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
     final file = File(filePath);
     await file.writeAsString(jsonEncode(responses));
     return filePath;
-  }
-
-  Future<void> calculateTravelHealthScore() async {
-    final responses = await fetchUserResponses();
-    final jsonFilePath = await generateJsonFile(responses);
-    final currentCityTempFile =
-        await loadAssetToTempFile(cityToFileMap[currentCity]!);
-    final destinationCityTempFile =
-        await loadAssetToTempFile(cityToFileMap[destinationCity]!);
-
-    final uri = Uri.parse("http://192.168.76.29:5000/travel-health-score");
-    final request = http.MultipartRequest('POST', uri);
-
-    request.fields['current_city'] = currentCity!;
-    request.fields['destination_city'] = destinationCity!;
-    request.files.add(await http.MultipartFile.fromPath('responses', jsonFilePath));
-    request.files.add(await http.MultipartFile.fromPath(
-        'current_city_diet', currentCityTempFile.path));
-    request.files.add(await http.MultipartFile.fromPath(
-        'destination_city_diet', destinationCityTempFile.path));
-
-    final response = await request.send();
-    final responseData = await http.Response.fromStream(response);
-
-    if (response.statusCode == 200) {
-      setState(() {
-        travelHealthScore = jsonDecode(responseData.body)['travelHealthScore'];
-      });
-    } else {
-      throw Exception(
-          "Failed to calculate travel health score. Status code: ${response.statusCode}");
-    }
   }
 
   Future<void> sendToGemini({

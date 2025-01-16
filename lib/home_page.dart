@@ -149,7 +149,7 @@ class _HomePageState extends State<HomePage> {
                                   : CircularPercentIndicator(
                                       radius: 50.0,
                                       lineWidth: 8.0,
-                                      percent: (healthScore ?? 0.0) / 10.0,
+                                      percent: (healthScore != null ? (healthScore! / 10.0).clamp(0.0, 1.0) : 0.0),
                                       center: Text(
                                         "${healthScore?.toStringAsFixed(2) ?? '0.00'}",
                                         style: const TextStyle(
