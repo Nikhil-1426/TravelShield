@@ -156,9 +156,10 @@ class _HomePageState extends State<HomePage> {
                                   : CircularPercentIndicator(
                                       radius: 50.0,
                                       lineWidth: 8.0,
-                                      percent: healthScore! / 100,
+                                      // Normalize the health score to range between 0.0 and 1.0
+                                      percent: (healthScore! / 10.0).clamp(0.0, 1.0),  // Normalized to 0.0-1.0
                                       center: Text(
-                                        "${healthScore?.toStringAsFixed(1)}%",
+                                        "${healthScore?.toStringAsFixed(1)}",  // Show health score with 1 decimal place
                                         style: const TextStyle(
                                           fontSize: 12.0,
                                           fontWeight: FontWeight.bold,
