@@ -97,6 +97,7 @@ def summarize():
     try:
         # Parse JSON data from the request
         data = request.get_json()
+        user_id = data.get('user_id')
         if not data:
             return jsonify({"error": "Invalid JSON data"}), 400
 
@@ -113,8 +114,6 @@ def summarize():
 
         # Get the summary from the Gemini response
         summary_result = response.text
-
-        # Return the summary as JSON response
         return jsonify({'summary': summary_result})
 
     except Exception as e:
@@ -127,6 +126,7 @@ def health_score():
     try:
         # Parse JSON data from the request
         data = request.get_json()
+        user_id = data.get('user_id')
         if not data:
             return jsonify({"error": "Invalid JSON data"}), 400
 
@@ -143,9 +143,7 @@ def health_score():
 
         # Get the health score from the Gemini response
         health_score = response.text.strip()
-
-        # Return the health score as JSON response
-        return jsonify({'health_score': health_score})
+        return jsonify({'healthScore': health_score})
 
     except Exception as e:
         print(f"Error: {str(e)}")
