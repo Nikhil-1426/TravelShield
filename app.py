@@ -159,7 +159,7 @@ def travel_health_score():
         ])
 
         travel_health_score = response.text.strip()
-        print(travel_health_score)
+        print(f"Generated travel health score: {travel_health_score}")
         return jsonify({'travelHealthScore': travel_health_score})
         
     except Exception as e:
@@ -225,8 +225,6 @@ def health_score():
         # Send the text and prompt to Gemini for analysis
         model = genai.GenerativeModel('gemini-1.5-pro')
         response = model.generate_content([{'text': prompt}])
-
-        print(f"Generated response: {response}")
 
         # Get the health score from the Gemini response
         health_score = response.text.strip()
