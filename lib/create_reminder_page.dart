@@ -87,31 +87,6 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                             content: Text(
                                 "Data successfully submitted for analysis!")),
                       );
-
-                      final travelData = {
-                        'from': currentCity,
-                        'to': destinationCity,
-                        'timestamp': FieldValue.serverTimestamp(),
-                        // 'travelID' should be created after docRef is available
-                      };
-
-                      // Add document to Firestore and get the reference
-                      DocumentReference docRef = await FirebaseFirestore
-                          .instance
-                          .collection('users')
-                          .doc(widget.uid)
-                          .collection('travelHistory')
-                          .add(travelData);
-
-                      // Get the travelID from the generated docRef
-                      String travelID = docRef.id;
-
-                      // Optionally update the document with the travelID (if needed in the future)
-                      await docRef.update({
-                        'travelID':
-                            travelID, // Add travelID field to the document
-                      });
-
                       await processAndSendData();
                       await calculateTravelHealthScore();
                     } catch (e) {
@@ -289,53 +264,56 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
     }
   }
 
-  Future<void> calculateTravelHealthScore() async {
-    if (currentCity == null || destinationCity == null) {
-      throw Exception("Both current and destination cities must be selected.");
-    }
-
-    try {
-      // 1. Create the travel history document first
-      final travelHistoryRef = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.uid)
-          .collection('travelHistory')
-          .add({
-        'currentCity': currentCity,
-        'destinationCity': destinationCity,
-        'timestamp': FieldValue.serverTimestamp(),
-        'travelHealthScore': null, // Initialize with null
-      });
-
-      final String travelID = travelHistoryRef.id;
-
-      // 2. Fetch responses from Firestore
-      final responses = await fetchUserResponses();
-
-      // 3. Convert to JSON file
-      final jsonFilePath = await generateJsonFile(responses);
-
-      // 4. Get city-specific diet files
-      final currentCityTempFile = await loadAssetToTempFile(cityToFileMap[currentCity]!);
-      final destinationCityTempFile = await loadAssetToTempFile(cityToFileMap[destinationCity]!);
-
-      // 5. Calculate health score
-      await sendTravelHealthScoreRequest(
-        currentCity: currentCity!,
-        destinationCity: destinationCity!,
-        jsonFilePath: jsonFilePath,
-        currentCityXlsxPath: currentCityTempFile.path,
-        destinationCityXlsxPath: destinationCityTempFile.path,
-        travelID: travelID,
-      );
-
-    } catch (e) {
-      print('Error in calculateTravelHealthScore: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error calculating travel health score: ${e.toString()}")),
-      );
-    }
+  // Update the calculateTravelHealthScore method:
+Future<void> calculateTravelHealthScore() async {
+  if (currentCity == null || destinationCity == null) {
+    throw Exception("Both current and destination cities must be selected.");
   }
+
+  try {
+    // Create a single document with all required fields
+    final travelHistoryRef = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.uid)
+        .collection('travelHistory')
+        .add({
+          'currentCity': currentCity,
+          'destinationCity': destinationCity,
+          'timestamp': FieldValue.serverTimestamp(),
+          'travelHealthScore': null,
+          'lastUpdated': FieldValue.serverTimestamp(),
+          'travelID': null  // Will be updated with the document ID
+        });
+
+    // Update the document with its ID
+    await travelHistoryRef.update({
+      'travelID': travelHistoryRef.id,
+    });
+
+    final String travelID = travelHistoryRef.id;
+
+    // Rest of your existing code...
+    final responses = await fetchUserResponses();
+    final jsonFilePath = await generateJsonFile(responses);
+    final currentCityTempFile = await loadAssetToTempFile(cityToFileMap[currentCity]!);
+    final destinationCityTempFile = await loadAssetToTempFile(cityToFileMap[destinationCity]!);
+
+    await sendTravelHealthScoreRequest(
+      currentCity: currentCity!,
+      destinationCity: destinationCity!,
+      jsonFilePath: jsonFilePath,
+      currentCityXlsxPath: currentCityTempFile.path,
+      destinationCityXlsxPath: destinationCityTempFile.path,
+      travelID: travelID,
+    );
+
+  } catch (e) {
+    print('Error in calculateTravelHealthScore: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error calculating travel health score: ${e.toString()}")),
+    );
+  }
+}
 
 
 // Send the request to the /travel-health-score endpoint
