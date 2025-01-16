@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
+// import 'package:fl_chart/fl_chart.dart';
 
 class CreateReminderPage extends StatefulWidget {
   final String uid; // User's UID
@@ -79,10 +80,11 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                       cityToFileMap.containsKey(currentCity!) &&
                       cityToFileMap.containsKey(destinationCity!)) {
                     try {
-                      await processAndSendData();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Data successfully submitted to Gemini for analysis!")),
+                        SnackBar(content: Text("Data successfully submitted for analysis!")),
                       );
+                      await processAndSendData();
+                      await calculateTravelHealthScore();
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text("Error: ${e.toString()}")),
@@ -190,6 +192,8 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
     );
   }
 
+  // Process the form data and send it to the /travel-health-score endpoint
+
   // Fetch user responses from Firestore
   Future<Map<String, dynamic>> fetchUserResponses() async {
     try {
@@ -251,6 +255,64 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
     }
   }
 
+Future<void> calculateTravelHealthScore() async {
+  if (currentCity == null || destinationCity == null) {
+    throw Exception("Both current and destination cities must be selected.");
+  }
+
+  // 1. Fetch responses from Firestore
+  final responses = await fetchUserResponses();
+
+  // 2. Convert to JSON file
+  final jsonFilePath = await generateJsonFile(responses);
+
+  // 3. Get city-specific diet files
+  final currentCityTempFile = await loadAssetToTempFile(cityToFileMap[currentCity]!);
+  final destinationCityTempFile = await loadAssetToTempFile(cityToFileMap[destinationCity]!);
+
+  // 4. Call the travel health score endpoint
+  await sendTravelHealthScoreRequest(
+    currentCity: currentCity!,
+    destinationCity: destinationCity!,
+    jsonFilePath: jsonFilePath,
+    currentCityXlsxPath: currentCityTempFile.path,
+    destinationCityXlsxPath: destinationCityTempFile.path,
+  );
+}
+
+// Send the request to the /travel-health-score endpoint
+  Future<void> sendTravelHealthScoreRequest({
+    required String currentCity,
+    required String destinationCity,
+    required String jsonFilePath,
+    required String currentCityXlsxPath,
+    required String destinationCityXlsxPath,
+  }) async {
+    final uri = Uri.parse("http://192.168.156.197:5000/travel-health-score"); // Replace with your server's address
+    final request = http.MultipartRequest('POST', uri);
+
+    // Attach fields
+    request.fields['current_city'] = currentCity;
+    request.fields['destination_city'] = destinationCity;
+
+    // Attach files
+    request.files.add(await http.MultipartFile.fromPath('responses', jsonFilePath));
+    request.files.add(await http.MultipartFile.fromPath('current_city_diet', currentCityXlsxPath));
+    request.files.add(await http.MultipartFile.fromPath('destination_city_diet', destinationCityXlsxPath));
+
+    // Send the request
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final responseData = await http.Response.fromStream(response);
+      final healthScore = jsonDecode(responseData.body)['travelHealthScore'];
+
+      // Display the health score in a dialog
+      showAnalysisDialog(context, "Your Travel Health Score: $healthScore");
+    } else {
+      throw Exception("Failed to calculate travel health score. Status code: ${response.statusCode}");
+    }
+  }
   // Send the data to Gemini for analysis
   Future<void> sendToGemini({
   required String currentCity,
