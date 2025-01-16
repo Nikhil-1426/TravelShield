@@ -154,20 +154,21 @@ class _HomePageState extends State<HomePage> {
                                       valueColor: AlwaysStoppedAnimation(Colors.red),
                                     )
                                   : CircularPercentIndicator(
-                                      radius: 50.0,
-                                      lineWidth: 8.0,
-                                      percent: healthScore! / 100,
-                                      center: Text(
-                                        "${healthScore?.toStringAsFixed(1)}%",
-                                        style: const TextStyle(
-                                          fontSize: 12.0,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.teal,
-                                        ),
+                                    radius: 50.0,
+                                    lineWidth: 8.0,
+                                    // Normalize the health score to range between 0.0 and 1.0
+                                    percent: (healthScore != null ? (healthScore! / 10.0).clamp(0.0, 1.0) : 0.0),  // Handle null health score safely
+                                    center: Text(
+                                      "${healthScore?.toStringAsFixed(2) ?? '0.00'}",  // Show health score with 2 decimal places, default to '0.00' if null
+                                      style: const TextStyle(
+                                        fontSize: 12.0,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.teal,
                                       ),
-                                      progressColor: Colors.green,
-                                      backgroundColor: Colors.white,
                                     ),
+                                    progressColor: Colors.green,
+                                    backgroundColor: Colors.white,
+                                  ),
                             ),
                           ),
                           const SizedBox(width: 20),

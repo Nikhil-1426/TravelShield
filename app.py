@@ -132,18 +132,31 @@ def health_score():
 
         # Create a prompt to generate the health score
         prompt = (
-            f"Based on the following user responses, generate a health score on a scale of 0.00 to 10.00:\n"
-            f"{json.dumps(data.get('responses', []), indent=2)}\n\n"
-            f"Return the score as a decimal number between 0.00 and 10.00. Make sure to keep the score precise to two decimal places."
-        )
+        f"Based on the following user responses, generate a health score on a scale of 0.00 to 10.00:\n"
+        f"{json.dumps(data.get('responses', []), indent=2)}\n\n"
+        f"Use the following guidelines for generating the health score:\n"
+        f"1. **Health Factors**: Consider conditions such as chronic diseases (e.g., diabetes, heart disease), past surgeries, and mental health. These conditions will impact the score based on their severity.\n"
+        f"2. **Positive Responses**: Conditions like 'No' answers or lack of symptoms should increase the score.\n"
+        f"3. **Negative Responses**: Conditions like 'Yes' answers to serious health issues (e.g., stroke, cancer) should decrease the score, but avoid extreme deductions.\n"
+        f"4. **Score Range**: The score should range between 0.00 (worst) and 10.00 (best), with intermediate values depending on the severity and combination of conditions.\n"
+        f"5. **Avoid extreme deductions**: Try to keep the score above 0.00 and reflect the overall health status. For example, if multiple severe conditions are reported, the score should reflect that but not go below 3.00 unless the conditions are extreme.\n"
+        f"6. **Precision**: Keep the score precise to two decimal places.\n\n"
+        f"Return only the score as a decimal number between 0.00 and 10.00. Example: 7.58 or 6.25 or 8.09"
+        f"Try not to keep the second decimal place as 0"
+    )
+
 
         # Send the text and prompt to Gemini for analysis
         model = genai.GenerativeModel('gemini-1.5-pro')
         response = model.generate_content([{'text': prompt}])
 
+        print(f"Generated response: {response}")
+
         # Get the health score from the Gemini response
         health_score = response.text.strip()
+        print(f"Generated health score: {health_score}")
         return jsonify({'healthScore': health_score})
+        
 
     except Exception as e:
         print(f"Error: {str(e)}")
