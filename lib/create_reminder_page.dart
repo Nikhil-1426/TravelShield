@@ -5,10 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
-// import 'package:fl_chart/fl_chart.dart';
 
 class CreateReminderPage extends StatefulWidget {
-  final String uid; // User's UID
+  final String uid;
   const CreateReminderPage({Key? key, required this.uid}) : super(key: key);
 
   @override
@@ -18,7 +17,11 @@ class CreateReminderPage extends StatefulWidget {
 class _CreateReminderPageState extends State<CreateReminderPage> {
   String? currentCity;
   String? destinationCity;
-  String analysisResult = ""; // Variable to store the response
+  String? departureDate;
+  String? returnDate;
+  String analysisResult = "";
+  double? travelHealthScore;
+  bool isApproved = false;
 
   final Map<String, String> cityToFileMap = {
     'Mumbai': "assets/mumbai_diet.xlsx",
@@ -31,62 +34,115 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Create Reminder"),
-        backgroundColor: Colors.teal,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text("Plan a Trip"),
+        centerTitle: true,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Dropdowns for selecting cities
             Text("Current City",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
             SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              decoration: InputDecoration(border: OutlineInputBorder()),
-              value: currentCity,
-              items: cities.map((city) {
-                return DropdownMenuItem<String>(value: city, child: Text(city));
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  currentCity = value;
-                });
-              },
-              hint: Text("Select Current City"),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListTile(
+                leading: Icon(Icons.flight_takeoff),
+                title: Text(currentCity ?? "From",
+                    style: TextStyle(color: Colors.black54)),
+                onTap: () {
+                  showCitySelectionDialog(true);
+                },
+              ),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 24),
             Text("Destination City",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
             SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              decoration: InputDecoration(border: OutlineInputBorder()),
-              value: destinationCity,
-              items: cities.map((city) {
-                return DropdownMenuItem<String>(value: city, child: Text(city));
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  destinationCity = value;
-                });
-              },
-              hint: Text("Select Destination City"),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListTile(
+                leading: Icon(Icons.flight_land),
+                title: Text(destinationCity ?? "To",
+                    style: TextStyle(color: Colors.black54)),
+                onTap: () {
+                  showCitySelectionDialog(false);
+                },
+              ),
+            ),
+            SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Departure Date",
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w500)),
+                      SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          leading: Icon(Icons.calendar_today),
+                          title: Text("Select Date",
+                              style: TextStyle(color: Colors.black54)),
+                          onTap: () {
+                            // Add date picker functionality
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Add Return Date",
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w500)),
+                      SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          leading: Icon(Icons.calendar_today),
+                          title: Text("Select Date",
+                              style: TextStyle(color: Colors.black54)),
+                          onTap: () {
+                            // Add date picker functionality
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: 32),
             Center(
               child: ElevatedButton(
                 onPressed: () async {
-                  if (currentCity != null &&
-                      destinationCity != null &&
-                      cityToFileMap.containsKey(currentCity!) &&
-                      cityToFileMap.containsKey(destinationCity!)) {
+                  if (currentCity != null && destinationCity != null) {
                     try {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(
-                                "Data successfully submitted for analysis!")),
-                      );
                       await processAndSendData();
                       await calculateTravelHealthScore();
                     } catch (e) {
@@ -100,21 +156,84 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                     );
                   }
                 },
-                child: Text("Submit"),
+                child: Text("SUBMIT",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  backgroundColor: Colors.grey[300],
+                  minimumSize: Size(200, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
             SizedBox(height: 32),
+            if (travelHealthScore != null) ...[
+              Center(
+                child: Column(
+                  children: [
+                    Text("From -> To",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w500)),
+                    SizedBox(height: 8),
+                    Text("Approved",
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.green)),
+                    SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black, width: 2),
+                      ),
+                      padding: EdgeInsets.all(16),
+                      child: Text(
+                        "${travelHealthScore?.toStringAsFixed(1)}",
+                        style: TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            SizedBox(height: 32),
+            Text("Summary",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+            SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black, width: 1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: EdgeInsets.all(16),
+              child: Text(analysisResult.isEmpty
+                  ? "Summary details go here..."
+                  : analysisResult),
+            ),
           ],
         ),
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 1,
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
+      ),
     );
   }
-
-  // Show the result in a Dialog (Popup)
   void showAnalysisDialog(BuildContext context, String analysisResult) {
     showDialog(
       context: context,
@@ -161,6 +280,36 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                 ),
               ],
             ),
+          ),
+        );
+
+      },
+    );
+  }
+
+  void showCitySelectionDialog(bool isCurrentCity) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(isCurrentCity ? "Select Current City" : "Select Destination City"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: cities
+                .map((city) => ListTile(
+                      title: Text(city),
+                      onTap: () {
+                        setState(() {
+                          if (isCurrentCity) {
+                            currentCity = city;
+                          } else {
+                            destinationCity = city;
+                          }
+                        });
+                        Navigator.pop(context);
+                      },
+                    ))
+                .toList(),
           ),
         );
       },
@@ -368,43 +517,41 @@ Future<void> calculateTravelHealthScore() async {
   }
 
   // Send the data to Gemini for analysis
-  Future<void> sendToGemini({
-    required String currentCity,
-    required String destinationCity,
-    required String jsonFilePath,
-    required String currentCityXlsxPath,
-    required String destinationCityXlsxPath,
-  }) async {
-    final uri = Uri.parse(
-        "http://192.168.76.29:5000/analyze-travel-health"); // Updated endpoint
-    final request = http.MultipartRequest('POST', uri);
+ Future<void> sendToGemini({
+  required String currentCity,
+  required String destinationCity,
+  required String jsonFilePath,
+  required String currentCityXlsxPath,
+  required String destinationCityXlsxPath,
+}) async {
+  final uri = Uri.parse("http://192.168.76.29:5000/analyze-travel-health"); // Updated endpoint
+  final request = http.MultipartRequest('POST', uri);
 
-    // Attach cities info
-    request.fields['current_city'] = currentCity;
-    request.fields['destination_city'] = destinationCity;
+  // Attach cities info
+  request.fields['current_city'] = currentCity;
+  request.fields['destination_city'] = destinationCity;
 
-    // Attach JSON file with user responses
-    request.files
-        .add(await http.MultipartFile.fromPath('responses', jsonFilePath));
+  // Attach JSON file with user responses
+  request.files.add(await http.MultipartFile.fromPath('responses', jsonFilePath));
 
-    // Attach the city-specific diet files
-    request.files.add(await http.MultipartFile.fromPath(
-        'current_city_diet', currentCityXlsxPath));
-    request.files.add(await http.MultipartFile.fromPath(
-        'destination_city_diet', destinationCityXlsxPath));
+  // Attach the city-specific diet files
+  request.files.add(await http.MultipartFile.fromPath('current_city_diet', currentCityXlsxPath));
+  request.files.add(await http.MultipartFile.fromPath('destination_city_diet', destinationCityXlsxPath));
 
-    // Send the request
-    final response = await request.send();
-    if (response.statusCode == 200) {
-      // Process the response from the server
-      final responseData = await http.Response.fromStream(response);
-      final analysisResult = jsonDecode(responseData.body)['analysis'];
+  // Send the request
+  final response = await request.send();
+  if (response.statusCode == 200) {
+    // Process the response from the server
+    final responseData = await http.Response.fromStream(response);
+    final analysisResult = jsonDecode(responseData.body)['analysis'];
 
-      // Show the analysis result in a dialog
-      showAnalysisDialog(context, analysisResult);
-    } else {
-      throw Exception(
-          "Failed to send data to Gemini. Status code: ${response.statusCode}");
-    }
+    // Update the analysis result and display it in the summary container
+    setState(() {
+      this.analysisResult = analysisResult;
+    });
+  } else {
+    throw Exception("Failed to send data to Gemini. Status code: ${response.statusCode}");
   }
+}
+
 }

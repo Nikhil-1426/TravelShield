@@ -252,7 +252,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        "${tripData['from'] ?? 'Unknown'} → ${tripData['to'] ?? 'Unknown'}",
+                                        "${tripData['currentCity'] ?? 'Unknown'} → ${tripData['destinationCity'] ?? 'Unknown'}",
                                         style: const TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
