@@ -120,91 +120,91 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  _buildRectangularCard(
+                    title: 'Your healthcare companion at your fingertips',
+                    icon: Icons.health_and_safety,
+                    color: Colors.purple,
+                    cardHeight: 160,
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
                     children: [
-                      const SizedBox(height: 40),
-                      _buildRectangularCard(
-                        title: 'Your healthcare companion at your fingertips',
-                        icon: Icons.health_and_safety,
-                        color: Colors.purple,
-                        cardHeight: 160,
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildFeatureCard(
-                              title: 'Health Score',
-                              icon: Icons.favorite,
-                              color: Colors.red,
-                              content: healthScore == null
-                                  ? const CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation(Colors.red),
-                                    )
-                                  : CircularPercentIndicator(
-                                    radius: 50.0,
-                                    lineWidth: 8.0,
-                                    // Normalize the health score to range between 0.0 and 1.0
-                                    percent: (healthScore != null ? (healthScore! / 10.0).clamp(0.0, 1.0) : 0.0),  // Handle null health score safely
-                                    center: Text(
-                                      "${healthScore?.toStringAsFixed(2) ?? '0.00'}",  // Show health score with 2 decimal places, default to '0.00' if null
-                                      style: const TextStyle(
-                                        fontSize: 12.0,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.teal,
-                                      ),
-                                    ),
-                                    progressColor: Colors.green,
-                                    backgroundColor: Colors.white,
-                                  ),
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            child: _buildFeatureCard(
-                              title: 'Plan a Trip',
-                              icon: Icons.airplanemode_active,
-                              color: Colors.blue,
-                              destination: CreateReminderPage(uid: widget.uid),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      _buildRectangularCard(
-                        title: 'Health Summary',
-                        icon: Icons.bar_chart,
-                        color: Colors.green,
-                        cardHeight: 250,
-                        child: isLoadingSummary
-                            ? const Center(
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation(Colors.teal),
-                                ),
-                              )
-                            : Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: SingleChildScrollView(
-                                  child: Text(
-                                    summaryText ?? 'No summary available.',
+                      Expanded(
+                        child: _buildFeatureCard(
+                          title: 'Health Score',
+                          icon: Icons.favorite,
+                          color: Colors.red,
+                          content: healthScore == null
+                              ? const CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation(Colors.red),
+                                )
+                              : CircularPercentIndicator(
+                                  radius: 50.0,
+                                  lineWidth: 8.0,
+                                  percent: (healthScore != null
+                                      ? (healthScore! / 10.0).clamp(0.0, 1.0)
+                                      : 0.0),
+                                  center: Text(
+                                    "${healthScore?.toStringAsFixed(2) ?? '0.00'}",
                                     style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.black87,
+                                      fontSize: 12.0,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.teal,
                                     ),
                                   ),
+                                  progressColor: Colors.green,
+                                  backgroundColor: Colors.white,
                                 ),
-                              ),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: _buildFeatureCard(
+                          title: 'Plan a Trip',
+                          icon: Icons.airplanemode_active,
+                          color: Colors.blue,
+                          destination: CreateReminderPage(uid: widget.uid),
+                        ),
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 20),
+                  _buildReportContainer(
+                    title: 'Health Summary',
+                    icon: Icons.bar_chart,
+                    color: Colors.green,
+                    cardHeight: 250,
+                    child: isLoadingSummary
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation(Colors.teal),
+                            ),
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: SingleChildScrollView(
+                              child: Text(
+                                summaryText ?? 'No summary available.',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ),
+                  ),
+                  // Add some padding at the bottom to ensure content isn't hidden behind the navigation bar
+                  const SizedBox(height: 80),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -217,21 +217,21 @@ class _HomePageState extends State<HomePage> {
         ],
         color: Colors.teal,
         buttonBackgroundColor: Colors.tealAccent,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         animationCurve: Curves.easeInOut,
         animationDuration: const Duration(milliseconds: 300),
         onTap: (index) {
           if (index == 0) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ProfilePage(uid: widget.uid)),
+              MaterialPageRoute(
+                  builder: (context) => ProfilePage(uid: widget.uid)),
             );
-          } else if (index == 1) {
-            // Already on Home Page
           } else if (index == 2) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => SettingsPage(uid: widget.uid)),
+              MaterialPageRoute(
+                  builder: (context) => SettingsPage(uid: widget.uid)),
             );
           }
         },
@@ -317,7 +317,8 @@ class _HomePageState extends State<HomePage> {
             height: double.infinity,
             decoration: BoxDecoration(
               color: color.withOpacity(0.2),
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(15)),
+              borderRadius:
+                  const BorderRadius.horizontal(left: Radius.circular(15)),
             ),
             child: Icon(icon, color: color, size: 40),
           ),
@@ -338,6 +339,125 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildReportContainer({
+    required String title,
+    required IconData icon,
+    required Color color,
+    double cardHeight = 100,
+    Widget? child,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Title and Add Button Row
+        Padding(
+          padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'User Report',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, color: Colors.white),
+                onPressed: () {
+                  // Text controller for the input field
+                  final TextEditingController textController =
+                      TextEditingController();
+
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Update'),
+                        content: TextField(
+                          controller: textController,
+                          decoration: const InputDecoration(
+                            hintText: 'Decsribe your condition',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              if (textController.text.isNotEmpty) {
+                                setState(() {
+                                  summaryText = textController.text;
+                                });
+                              }
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text('Update'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        // Original Card Container
+        Container(
+          height: cardHeight,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 5,
+                offset: Offset(2, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 80,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  borderRadius:
+                      const BorderRadius.horizontal(left: Radius.circular(15)),
+                ),
+                child: Icon(icon, color: color, size: 40),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: child ??
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal,
+                        ),
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
