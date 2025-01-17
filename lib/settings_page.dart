@@ -6,7 +6,6 @@ import 'help_centre_page.dart';
 import 'terms_and_conditions_page.dart';
 import 'about_us_page.dart';
 import 'profile_page.dart';
-import 'package:firebase_auth/firebase_auth.dart';  // Import FirebaseAuth package
 
 class SettingsPage extends StatelessWidget {
   final String uid;
@@ -25,22 +24,6 @@ class SettingsPage extends StatelessWidget {
         backgroundColor: Colors.teal,
         centerTitle: true,
         elevation: 4,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.home),
-            onPressed: () async {
-              final uid = await _getUid();  // Fetch the UID here
-              if (uid != null && uid.isNotEmpty) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomePage(uid: uid)),
-                );
-              } else {
-                Navigator.pushReplacementNamed(context, '/signin');
-              }
-            },
-          ),
-        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -178,11 +161,6 @@ class SettingsPage extends StatelessWidget {
   }
 
   // Define _getUid method to fetch UID using FirebaseAuth
-  Future<String?> _getUid() async {
-    // Fetch the current authenticated user
-    final User? user = FirebaseAuth.instance.currentUser;
-    return user?.uid;
-  }
 
   Widget _buildRectangularCard({
     required String title,
