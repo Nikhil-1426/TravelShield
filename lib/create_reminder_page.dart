@@ -268,8 +268,7 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
 Future<void> calculateTravelHealthScore() async {
   if (currentCity == null || destinationCity == null) {
     throw Exception("Both current and destination cities must be selected.");
-  }
-
+    
   try {
     // Create a single document with all required fields
     final travelHistoryRef = await FirebaseFirestore.instance
@@ -313,8 +312,6 @@ Future<void> calculateTravelHealthScore() async {
       SnackBar(content: Text("Error calculating travel health score: ${e.toString()}")),
     );
   }
-}
-
 
 // Send the request to the /travel-health-score endpoint
   Future<void> sendTravelHealthScoreRequest({
@@ -326,7 +323,7 @@ Future<void> calculateTravelHealthScore() async {
     required String travelID,
   }) async {
     try {
-      final uri = Uri.parse("http://192.168.76.29:5000/travel-health-score");
+      final uri = Uri.parse("http://192.168.156.197:5000/travel-health-score");
       final request = http.MultipartRequest('POST', uri);
 
       // Attach fields

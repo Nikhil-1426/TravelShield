@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'profile_page.dart'; // Import the profile page
 import 'home_page.dart';    // Import the home page
 import 'settings_page.dart'; // Import the settings page
