@@ -3,13 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// import 'track_health_page.dart';
 import 'create_reminder_page.dart';
 import 'settings_page.dart';
-import 'health_history_page.dart';
 import 'profile_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 
 class HomePage extends StatefulWidget {
   final String uid;
@@ -105,11 +102,10 @@ class _HomePageState extends State<HomePage> {
             onPressed: () async {
               final prefs = await SharedPreferences.getInstance();
               await prefs.clear();
-
               FirebaseAuth.instance.signOut();
               if (mounted) {
-              Navigator.pushReplacementNamed(context, '/signin');
-            }
+                Navigator.pushReplacementNamed(context, '/signin');
+              }
             },
             tooltip: 'Sign Out',
           ),
@@ -133,11 +129,9 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       const SizedBox(height: 40),
                       _buildRectangularCard(
-                        context,
                         title: 'Your healthcare companion at your fingertips',
                         icon: Icons.health_and_safety,
                         color: Colors.purple,
-                        destination: SettingsPage(uid: '',),
                         cardHeight: 160,
                       ),
                       const SizedBox(height: 20),
@@ -145,7 +139,6 @@ class _HomePageState extends State<HomePage> {
                         children: [
                           Expanded(
                             child: _buildFeatureCard(
-                              context,
                               title: 'Health Score',
                               icon: Icons.favorite,
                               color: Colors.red,
@@ -174,7 +167,6 @@ class _HomePageState extends State<HomePage> {
                           const SizedBox(width: 20),
                           Expanded(
                             child: _buildFeatureCard(
-                              context,
                               title: 'Plan a Trip',
                               icon: Icons.airplanemode_active,
                               color: Colors.blue,
@@ -185,11 +177,9 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: 20),
                       _buildRectangularCard(
-                        context,
                         title: 'Health Summary',
                         icon: Icons.bar_chart,
                         color: Colors.green,
-                        destination: const HealthHistoryPage(uid: '',),
                         cardHeight: 250,
                         child: isLoadingSummary
                             ? const Center(
@@ -206,7 +196,6 @@ class _HomePageState extends State<HomePage> {
                                       fontSize: 16,
                                       color: Colors.black87,
                                     ),
-                                    textAlign: TextAlign.start,
                                   ),
                                 ),
                               ),
@@ -250,12 +239,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildFeatureCard(BuildContext context,
-      {required String title,
-      required IconData icon,
-      required Color color,
-      Widget? content,
-      Widget? destination}) {
+  Widget _buildFeatureCard({
+    required String title,
+    required IconData icon,
+    required Color color,
+    Widget? content,
+    Widget? destination,
+  }) {
     return GestureDetector(
       onTap: () {
         if (destination != null) {
@@ -270,8 +260,8 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            const BoxShadow(
+          boxShadow: const [
+            BoxShadow(
               color: Colors.black26,
               blurRadius: 5,
               offset: Offset(2, 2),
@@ -283,11 +273,7 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    icon,
-                    size: 50,
-                    color: color,
-                  ),
+                  Icon(icon, size: 50, color: color),
                   const SizedBox(height: 10),
                   Text(
                     title,
@@ -304,65 +290,53 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildRectangularCard(BuildContext context,
-      {required String title,
-      required IconData icon,
-      required Color color,
-      required Widget destination,
-      double cardHeight = 100,
-      Widget? child}) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => destination),
-        );
-      },
-      child: Container(
-        height: cardHeight,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 5,
-              offset: Offset(2, 2),
+  Widget _buildRectangularCard({
+    required String title,
+    required IconData icon,
+    required Color color,
+    double cardHeight = 100,
+    Widget? child,
+  }) {
+    return Container(
+      height: cardHeight,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 5,
+            offset: Offset(2, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 80,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(15)),
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 80,
-              height: double.infinity,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(15)),
-              ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 40,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: child ??
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.teal,
-                      ),
+            child: Icon(icon, color: color, size: 40),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: child ??
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal,
                     ),
-              ),
+                  ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
