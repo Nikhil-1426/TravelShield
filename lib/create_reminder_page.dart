@@ -265,143 +265,153 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
   }
 
   // Update the calculateTravelHealthScore method:
-Future<void> calculateTravelHealthScore() async {
-  if (currentCity == null || destinationCity == null) {
-    throw Exception("Both current and destination cities must be selected.");
-    
-  try {
-    // Create a single document with all required fields
-    final travelHistoryRef = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.uid)
-        .collection('travelHistory')
-        .add({
-          'currentCity': currentCity,
-          'destinationCity': destinationCity,
-          'timestamp': FieldValue.serverTimestamp(),
-          'travelHealthScore': null,
-          'lastUpdated': FieldValue.serverTimestamp(),
-          'travelID': null  // Will be updated with the document ID
-        });
+  Future<void> calculateTravelHealthScore() async {
+    if (currentCity == null || destinationCity == null) {
+      throw Exception("Both current and destination cities must be selected.");
+    }
+    try {
+      // Create a single document with all required fields
+      final travelHistoryRef = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.uid)
+          .collection('travelHistory')
+          .add({
+        'currentCity': currentCity,
+        'destinationCity': destinationCity,
+        'timestamp': FieldValue.serverTimestamp(),
+        'travelHealthScore': null,
+        'lastUpdated': FieldValue.serverTimestamp(),
+        'travelID': null // Will be updated with the document ID
+      });
 
-    // Update the document with its ID
-    await travelHistoryRef.update({
-      'travelID': travelHistoryRef.id,
-    });
+      // Update the document with its ID
+      await travelHistoryRef.update({
+        'travelID': travelHistoryRef.id,
+      });
 
-    final String travelID = travelHistoryRef.id;
+      final String travelID = travelHistoryRef.id;
 
-    // Rest of your existing code...
-    final responses = await fetchUserResponses();
-    final jsonFilePath = await generateJsonFile(responses);
-    final currentCityTempFile = await loadAssetToTempFile(cityToFileMap[currentCity]!);
-    final destinationCityTempFile = await loadAssetToTempFile(cityToFileMap[destinationCity]!);
+      // Rest of your existing code...
+      final responses = await fetchUserResponses();
+      final jsonFilePath = await generateJsonFile(responses);
+      final currentCityTempFile =
+          await loadAssetToTempFile(cityToFileMap[currentCity]!);
+      final destinationCityTempFile =
+          await loadAssetToTempFile(cityToFileMap[destinationCity]!);
 
-    await sendTravelHealthScoreRequest(
-      currentCity: currentCity!,
-      destinationCity: destinationCity!,
-      jsonFilePath: jsonFilePath,
-      currentCityXlsxPath: currentCityTempFile.path,
-      destinationCityXlsxPath: destinationCityTempFile.path,
-      travelID: travelID,
-    );
-
-  } catch (e) {
-    print('Error in calculateTravelHealthScore: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Error calculating travel health score: ${e.toString()}")),
-    );
+      await sendTravelHealthScoreRequest(
+        currentCity: currentCity!,
+        destinationCity: destinationCity!,
+        jsonFilePath: jsonFilePath,
+        currentCityXlsxPath: currentCityTempFile.path,
+        destinationCityXlsxPath: destinationCityTempFile.path,
+        travelID: travelID,
+      );
+    } catch (e) {
+      print('Error in calculateTravelHealthScore: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text("Error calculating travel health score: ${e.toString()}")),
+      );
+    }
   }
 
 // Send the request to the /travel-health-score endpoint
-  Future<void> sendTravelHealthScoreRequest({
-    required String currentCity,
-    required String destinationCity,
-    required String jsonFilePath,
-    required String currentCityXlsxPath,
-    required String destinationCityXlsxPath,
-    required String travelID,
-  }) async {
-    try {
-      final uri = Uri.parse("http://192.168.156.197:5000/travel-health-score");
+    Future<void> sendTravelHealthScoreRequest({
+      required String currentCity,
+      required String destinationCity,
+      required String jsonFilePath,
+      required String currentCityXlsxPath,
+      required String destinationCityXlsxPath,
+      required String travelID,
+    }) async {
+      try {
+        final uri =
+            Uri.parse("http://192.168.156.197:5000/travel-health-score");
+        final request = http.MultipartRequest('POST', uri);
+
+        // Attach fields
+        request.fields['current_city'] = currentCity;
+        request.fields['destination_city'] = destinationCity;
+
+        // Attach files
+        request.files
+            .add(await http.MultipartFile.fromPath('responses', jsonFilePath));
+        request.files.add(await http.MultipartFile.fromPath(
+            'current_city_diet', currentCityXlsxPath));
+        request.files.add(await http.MultipartFile.fromPath(
+            'destination_city_diet', destinationCityXlsxPath));
+
+        // Send the request
+        final response = await request.send();
+        final responseData = await http.Response.fromStream(response);
+
+        if (response.statusCode == 200) {
+          final healthScore =
+              jsonDecode(responseData.body)['travelHealthScore'];
+
+          // Update the existing document with the health score
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.uid)
+              .collection('travelHistory')
+              .doc(travelID)
+              .update({
+            'travelHealthScore': healthScore,
+            'lastUpdated': FieldValue.serverTimestamp(),
+          });
+
+          // Show the health score in a dialog
+          showAnalysisDialog(context, "Your Travel Health Score: $healthScore");
+        } else {
+          throw Exception(
+              "Failed to calculate travel health score. Status code: ${response.statusCode}");
+        }
+      } catch (e) {
+        print('Error in sendTravelHealthScoreRequest: $e');
+        throw Exception("Error saving travel health score: ${e.toString()}");
+      }
+    }
+
+    // Send the data to Gemini for analysis
+    Future<void> sendToGemini({
+      required String currentCity,
+      required String destinationCity,
+      required String jsonFilePath,
+      required String currentCityXlsxPath,
+      required String destinationCityXlsxPath,
+    }) async {
+      final uri = Uri.parse(
+          "http://192.168.76.29:5000/analyze-travel-health"); // Updated endpoint
       final request = http.MultipartRequest('POST', uri);
 
-      // Attach fields
+      // Attach cities info
       request.fields['current_city'] = currentCity;
       request.fields['destination_city'] = destinationCity;
 
-      // Attach files
-      request.files.add(await http.MultipartFile.fromPath('responses', jsonFilePath));
-      request.files.add(await http.MultipartFile.fromPath('current_city_diet', currentCityXlsxPath));
-      request.files.add(await http.MultipartFile.fromPath('destination_city_diet', destinationCityXlsxPath));
+      // Attach JSON file with user responses
+      request.files
+          .add(await http.MultipartFile.fromPath('responses', jsonFilePath));
+
+      // Attach the city-specific diet files
+      request.files.add(await http.MultipartFile.fromPath(
+          'current_city_diet', currentCityXlsxPath));
+      request.files.add(await http.MultipartFile.fromPath(
+          'destination_city_diet', destinationCityXlsxPath));
 
       // Send the request
       final response = await request.send();
-      final responseData = await http.Response.fromStream(response);
-
       if (response.statusCode == 200) {
-        final healthScore = jsonDecode(responseData.body)['travelHealthScore'];
+        // Process the response from the server
+        final responseData = await http.Response.fromStream(response);
+        final analysisResult = jsonDecode(responseData.body)['analysis'];
 
-        // Update the existing document with the health score
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(widget.uid)
-            .collection('travelHistory')
-            .doc(travelID)
-            .update({
-          'travelHealthScore': healthScore,
-          'lastUpdated': FieldValue.serverTimestamp(),
-        });
-
-        // Show the health score in a dialog
-        showAnalysisDialog(context, "Your Travel Health Score: $healthScore");
+        // Show the analysis result in a dialog
+        showAnalysisDialog(context, analysisResult);
       } else {
-        throw Exception("Failed to calculate travel health score. Status code: ${response.statusCode}");
+        throw Exception(
+            "Failed to send data to Gemini. Status code: ${response.statusCode}");
       }
-    } catch (e) {
-      print('Error in sendTravelHealthScoreRequest: $e');
-      throw Exception("Error saving travel health score: ${e.toString()}");
     }
   }
-
-  // Send the data to Gemini for analysis
-  Future<void> sendToGemini({
-    required String currentCity,
-    required String destinationCity,
-    required String jsonFilePath,
-    required String currentCityXlsxPath,
-    required String destinationCityXlsxPath,
-  }) async {
-    final uri = Uri.parse(
-        "http://192.168.76.29:5000/analyze-travel-health"); // Updated endpoint
-    final request = http.MultipartRequest('POST', uri);
-
-    // Attach cities info
-    request.fields['current_city'] = currentCity;
-    request.fields['destination_city'] = destinationCity;
-
-    // Attach JSON file with user responses
-    request.files
-        .add(await http.MultipartFile.fromPath('responses', jsonFilePath));
-
-    // Attach the city-specific diet files
-    request.files.add(await http.MultipartFile.fromPath(
-        'current_city_diet', currentCityXlsxPath));
-    request.files.add(await http.MultipartFile.fromPath(
-        'destination_city_diet', destinationCityXlsxPath));
-
-    // Send the request
-    final response = await request.send();
-    if (response.statusCode == 200) {
-      // Process the response from the server
-      final responseData = await http.Response.fromStream(response);
-      final analysisResult = jsonDecode(responseData.body)['analysis'];
-
-      // Show the analysis result in a dialog
-      showAnalysisDialog(context, analysisResult);
-    } else {
-      throw Exception(
-          "Failed to send data to Gemini. Status code: ${response.statusCode}");
-    }
-  }
-}
