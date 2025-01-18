@@ -729,7 +729,7 @@ class _DynamicQuestionnaireState extends State<DynamicQuestionnaire> {
   // Call the /health-score endpoint
     Future<double?> _getHealthScore(Map<String, dynamic> jsonData) async {
     final url = Uri.parse(
-      'http://192.168.76.29:5000/generalized-health-score', // Replace with actual URL
+      'http://192.168.76.29:5000/generalized-health-score', // Replace with actual URL// Replace with actual URL
     );
     
     try {

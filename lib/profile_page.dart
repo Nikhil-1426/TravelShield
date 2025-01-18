@@ -3,9 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'settings_page.dart';
 import 'home_page.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilePage extends StatefulWidget {
-  final String uid; // User's unique ID
+  final String uid;
   const ProfilePage({Key? key, required this.uid}) : super(key: key);
 
   @override
@@ -17,403 +18,452 @@ class _ProfilePageState extends State<ProfilePage> {
   bool profileUpdated = false;
   List<String> selectedVaccinations = [];
   final List<String> vaccinationOptions = [
-    'Hepatitis A', 'Hepatitis B', 'Typhoid', 'DTaP', 'MMR', 'Malaria', 
-    'Polio', 'Yellow Fever', 'Influenza', 'COVID - 19'
+    'Hepatitis A',
+    'Hepatitis B',
+    'Typhoid',
+    'DTaP',
+    'MMR',
+    'Malaria',
+    'Polio',
+    'Yellow Fever',
+    'Influenza',
+    'COVID - 19'
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: FutureBuilder<DocumentSnapshot>(
-          future: FirebaseFirestore.instance.collection('users').doc(widget.uid).get(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(color: Colors.teal),
-              );
-            }
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text(
+          'Profile',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.teal,
+        centerTitle: true,
+        elevation: 4,
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.teal, Colors.tealAccent],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: FutureBuilder<DocumentSnapshot>(
+            future: FirebaseFirestore.instance
+                .collection('users')
+                .doc(widget.uid)
+                .get(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                );
+              }
 
-            if (snapshot.hasError) {
-              return const Center(
-                child: Text(
-                  "Error fetching profile data.",
-                  style: TextStyle(fontSize: 16, color: Colors.red),
-                ),
-              );
-            }
-
-            var userData = snapshot.data?.data() as Map<String, dynamic>? ?? {};
-            name = userData['name'] ?? 'Guest User';
-            age = userData['age'] ?? 'Unknown';
-            gender = userData['gender'] ?? 'Unknown';
-            photoUrl = userData['photoUrl'] ?? '';
-
-            return Column(
-              children: [
-                // Top Header Section
-                Container(
-                  height: 60,
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Colors.teal, Colors.tealAccent],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+              if (snapshot.hasError) {
+                return Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+                    child: const Text(
+                      "Error fetching profile data.",
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
                   ),
-                  child: Stack(
-                    children: [
-                      Center(
-                        child: Text(
-                          "Travel Shield",
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        top: 18,
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.logout,
-                            size: 24,
-                            color: Colors.white,
-                          ),
-                          onPressed: () {
-                            // Implement logout functionality
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                );
+              }
 
-                // Profile Section
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  margin: const EdgeInsets.only(top: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              var userData =
+                  snapshot.data?.data() as Map<String, dynamic>? ?? {};
+              name = userData['name'] ?? 'Guest User';
+              age = userData['age'] ?? 'Unknown';
+              gender = userData['gender'] ?? 'Unknown';
+              photoUrl = userData['photoUrl'] ?? '';
+
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
                     children: [
-                      // Profile Picture
+                      // Profile Card
                       Container(
-                        width: 80,
-                        height: 80,
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.teal, width: 2),
-                        ),
-                        child: photoUrl.isEmpty
-                            ? const Icon(
-                                Icons.person,
-                                size: 48,
-                                color: Colors.grey,
-                              )
-                            : ClipOval(
-                                child: Image.network(
-                                  photoUrl,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                      ),
-                      const SizedBox(width: 16),
-                      // Profile Details
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Name: $name",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "Age: $age",
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Gender: $gender",
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black,
-                              ),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 5,
+                              offset: Offset(2, 2),
                             ),
                           ],
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.edit,
-                          size: 24,
-                          color: Colors.teal,
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 20),
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Container(
+                                  width: 120,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: Colors.teal, width: 3),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.teal.withOpacity(0.3),
+                                        blurRadius: 10,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipOval(
+                                    child: photoUrl.isEmpty
+                                        ? const Icon(Icons.person,
+                                            size: 80, color: Colors.teal)
+                                        : Image.network(photoUrl,
+                                            fit: BoxFit.cover),
+                                  ),
+                                ),
+                                Positioned(
+                                  right: 0,
+                                  bottom: 0,
+                                  child: CircleAvatar(
+                                    backgroundColor: Colors.teal,
+                                    radius: 18,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          size: 18, color: Colors.white),
+                                      onPressed: _showUpdateProfileDialog,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.teal,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildInfoChip(Icons.cake, age),
+                                const SizedBox(width: 16),
+                                _buildInfoChip(Icons.person, gender),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                          ],
                         ),
-                        onPressed: () {
-                          _showUpdateProfileDialog();
-                        },
                       ),
-                    ],
-                  ),
-                ),
 
-                // Travel History Section
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
+                      const SizedBox(height: 24),
+
+                      // Travel History Section
+                      _buildSectionCard(
                         "Travel History",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
+                        Icons.flight_takeoff,
+                        _buildTravelHistory(),
                       ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.refresh,
-                          size: 24,
-                          color: Colors.teal,
-                        ),
-                        onPressed: () {
-                          // Implement refresh functionality if needed
-                        },
-                      ),
-                    ],
-                  ),
-                ),
 
-                // Fetching Travel History from Firestore
-                StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(widget.uid)
-                      .collection('travelHistory')
-                      .orderBy('timestamp') // Ensure we fetch by the timestamp
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return const Center(child: Text('Error loading travel history.'));
-                    }
-                    var travelHistory = snapshot.data?.docs ?? [];
+                      const SizedBox(height: 24),
 
-                    return Expanded(
-                      child: travelHistory.isNotEmpty
-                          ? ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              itemCount: travelHistory.length,
-                              itemBuilder: (context, index) {
-                                var trip = travelHistory[index];
-                                var tripData = trip.data() as Map<String, dynamic>;
-                                return Container(
-                                  padding: const EdgeInsets.all(12),
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(8),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.1),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "${tripData['currentCity'] ?? 'Unknown'} → ${tripData['destinationCity'] ?? 'Unknown'}",
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        tripData['date'] ?? 'N/A',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            )
-                          : const Center(
-                              child: Text(
-                                "No travel history available.",
-                                style: TextStyle(fontSize: 14, color: Colors.grey),
-                              ),
-                            ),
-                    );
-                  },
-                ),
-
-                // Vaccinations Section
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
+                      // Vaccinations Section
+                      _buildSectionCard(
                         "Vaccinations",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                        Icons.healing,
+                        _buildVaccinations(),
+                        action: IconButton(
+                          icon:
+                              const Icon(Icons.add_circle, color: Colors.teal),
+                          onPressed: _showVaccinationDialog,
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.add,
-                          size: 24,
-                          color: Colors.teal,
-                        ),
-                        onPressed: _showVaccinationDialog,
                       ),
                     ],
                   ),
                 ),
-
-                // Fetching Vaccinations from Firestore
-                StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(widget.uid)
-                      .collection('vaccinations')
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return const Center(child: Text('Error loading vaccinations.'));
-                    }
-                    var vaccinations = snapshot.data?.docs ?? [];
-
-                    return Expanded(
-                      child: vaccinations.isNotEmpty
-                          ? ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              itemCount: vaccinations.length,
-                              itemBuilder: (context, index) {
-                                var vaccination = vaccinations[index];
-                                var vaccinationData = vaccination.data() as Map<String, dynamic>;
-                                return Container(
-                                  padding: const EdgeInsets.all(12),
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(8),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.1),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        vaccinationData['vaccineName'] ?? 'Unknown Vaccine',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        vaccinationData['dateAdministered'] ?? 'N/A',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            )
-                          : const Center(
-                              child: Text(
-                                "No vaccination records available.",
-                                style: TextStyle(fontSize: 14, color: Colors.grey),
-                              ),
-                            ),
-                    );
-                  },
-                ),
-
-                // Curved Bottom Navigation Bar
-                CurvedNavigationBar(
-                  index: 0,
-                  items: const [
-                    Icon(Icons.person, size: 30, color: Colors.white),
-                    Icon(Icons.home, size: 30, color: Colors.white),
-                    Icon(Icons.settings, size: 30, color: Colors.white),
-                  ],
-                  color: Colors.teal,
-                  buttonBackgroundColor: Colors.tealAccent,
-                  backgroundColor: Colors.white,
-                  animationCurve: Curves.easeInOut,
-                  animationDuration: const Duration(milliseconds: 300),
-                  onTap: (index) {
-                    if (index == 0) {
-                      //Already on profile page
-                    } else if (index == 1) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => HomePage(uid: widget.uid)),
-                      );
-                    } else if (index == 2) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => SettingsPage(uid: widget.uid)),
-                      );
-                    }
-                  },
-                ),
-              ],
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
+      bottomNavigationBar: CurvedNavigationBar(
+        index: 0,
+        items: const [
+          Icon(Icons.person, size: 30, color: Colors.white),
+          Icon(Icons.home, size: 30, color: Colors.white),
+          Icon(Icons.settings, size: 30, color: Colors.white),
+        ],
+        color: Colors.teal,
+        buttonBackgroundColor: Colors.tealAccent,
+        backgroundColor: Colors.transparent,
+        animationCurve: Curves.easeInOut,
+        animationDuration: const Duration(milliseconds: 300),
+        onTap: (index) {
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => HomePage(uid: widget.uid)),
+            );
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => SettingsPage(uid: widget.uid)),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.teal.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.teal),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.teal,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCard(String title, IconData icon, Widget content,
+      {Widget? action}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 5,
+            offset: Offset(2, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(icon, color: Colors.teal),
+                    const SizedBox(width: 8),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.teal,
+                      ),
+                    ),
+                  ],
+                ),
+                if (action != null) action,
+              ],
+            ),
+          ),
+          content,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTravelHistory() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.uid)
+          .collection('travelHistory')
+          .orderBy('timestamp', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('Error loading travel history.'),
+          );
+        }
+
+        var travelHistory = snapshot.data?.docs ?? [];
+
+        if (travelHistory.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(
+              child: Text(
+                "No travel history available.",
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: travelHistory.length,
+          itemBuilder: (context, index) {
+            var trip = travelHistory[index].data() as Map<String, dynamic>;
+            return Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.flight, color: Colors.teal),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "${trip['from']} → ${trip['to']}",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.teal,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          trip['date'] ?? 'N/A',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildVaccinations() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.uid)
+          .collection('vaccinations')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('Error loading vaccinations.'),
+          );
+        }
+
+        var vaccinations = snapshot.data?.docs ?? [];
+
+        if (vaccinations.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(
+              child: Text(
+                "No vaccination records available.",
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: vaccinations.length,
+          itemBuilder: (context, index) {
+            var vaccination =
+                vaccinations[index].data() as Map<String, dynamic>;
+            return Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          vaccination['vaccineName'] ?? 'Unknown Vaccine',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.teal,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          vaccination['dateAdministered'] ?? 'N/A',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -473,22 +523,26 @@ class _ProfilePageState extends State<ProfilePage> {
           .collection('vaccinations')
           .get()
           .then((snapshot) {
-            snapshot.docs.forEach((doc) {
-              doc.reference.delete(); // Remove existing vaccinations
-            });
+        snapshot.docs.forEach((doc) {
+          doc.reference.delete(); // Remove existing vaccinations
+        });
 
-            // Add the selected vaccinations to Firestore
-            for (var vaccine in selectedVaccinations) {
-              FirebaseFirestore.instance.collection('users').doc(widget.uid).collection('vaccinations').add({
-                'vaccineName': vaccine,
-                'dateAdministered': DateTime.now().toString(),
-              });
-            }
+        // Add the selected vaccinations to Firestore
+        for (var vaccine in selectedVaccinations) {
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.uid)
+              .collection('vaccinations')
+              .add({
+            'vaccineName': vaccine,
+            'dateAdministered': DateTime.now().toString(),
           });
+        }
+      });
     }
   }
 
-    void _showUpdateProfileDialog() {
+  void _showUpdateProfileDialog() {
     final ageController = TextEditingController();
     final genderController = TextEditingController();
     final photoController = TextEditingController();
@@ -503,16 +557,19 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               TextField(
                 controller: ageController,
-                decoration: const InputDecoration(labelText: "Age", hintText: "Enter Age"),
+                decoration: const InputDecoration(
+                    labelText: "Age", hintText: "Enter Age"),
                 keyboardType: TextInputType.number,
               ),
               TextField(
                 controller: genderController,
-                decoration: const InputDecoration(labelText: "Gender", hintText: "Enter Gender"),
+                decoration: const InputDecoration(
+                    labelText: "Gender", hintText: "Enter Gender"),
               ),
               TextField(
                 controller: photoController,
-                decoration: const InputDecoration(labelText: "Photo URL (optional)"),
+                decoration:
+                    const InputDecoration(labelText: "Photo URL (optional)"),
               ),
             ],
           ),
@@ -525,17 +582,24 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             TextButton(
               onPressed: () {
-                if (ageController.text.isEmpty || genderController.text.isEmpty) {
+                if (ageController.text.isEmpty ||
+                    genderController.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Age and Gender are required")),
+                    const SnackBar(
+                        content: Text("Age and Gender are required")),
                   );
                   return;
                 }
                 // Update the Firestore data
-                FirebaseFirestore.instance.collection('users').doc(widget.uid).update({
+                FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(widget.uid)
+                    .update({
                   'age': ageController.text,
                   'gender': genderController.text,
-                  'photoUrl': photoController.text.isNotEmpty ? photoController.text : photoUrl,
+                  'photoUrl': photoController.text.isNotEmpty
+                      ? photoController.text
+                      : photoUrl,
                 }).then((_) {
                   setState(() {
                     age = ageController.text;

@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Initialize the Gemini API with your API key
-api_key = "AIzaSyBoMOD0t8PEM0lQ1yZV5wwirevfXEc88UQ"
+api_key = "AIzaSyCknzHY7WBpNZn7tglAYghlh5TN-dZ9ros"
 genai.configure(api_key=api_key)
 
 # Directory to save uploaded files temporarily
@@ -157,8 +157,8 @@ def travel_health_score():
             {'text': current_city_diet_text},
             {'text': destination_city_diet_text}
         ])
-
         travel_health_score = response.text.strip()
+        print(travel_health_score)
         return jsonify({'travelHealthScore': travel_health_score})
         
     except Exception as e:
