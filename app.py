@@ -4,13 +4,21 @@ import google.generativeai as genai
 import os
 import pandas as pd
 import json
+import requests
+import uuid
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Initialize the Gemini API with your API key
-api_key = "AIzaSyCtZtaXIqlH-ZHMAWD5OJCEX_w5BZD79Aw"
+api_key = "AIzaSyAcnBQiZd7UhYFgS625l2hslzCiOr-YJ50"
 genai.configure(api_key=api_key)
+
+# Azure Translator API configuration
+TRANSLATOR_KEY = "CqxUuD3Q49pvij9qtQdRjBmSecrSKVfVMlfVecIThYWr8iBEy5KGJQQJ99BAACGhslBXJ3w3AAAbACOGnNg4"
+TRANSLATOR_ENDPOINT = "https://api.cognitive.microsofttranslator.com"
+TRANSLATOR_REGION = "centralindia"
+
 
 # Directory to save uploaded files temporarily
 UPLOAD_FOLDER = './uploads'
@@ -232,6 +240,67 @@ def health_score():
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/translate', methods=['POST'])
+def translate_text():
+    try:
+        # Parse request data
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid JSON data"}), 400
+
+        # Extract required parameters from the request
+        text_to_translate = data.get('text')
+        from_language = data.get('from', 'en')  # Default to English if not specified
+        to_language = data.get('to', ['en'])  # Expecting a list of target languages
+
+        if not text_to_translate or not to_language:
+            return jsonify({"error": "Missing 'text' or 'to' in the request"}), 400
+
+        # Convert `to_language` to a single item list if it's not already a list
+        if isinstance(to_language, str):
+            to_language = [to_language]
+
+        # Construct the request to Azure Translator API
+        path = '/translate'
+        constructed_url = TRANSLATOR_ENDPOINT + path
+
+        params = {
+            'api-version': '3.0',
+            'from': from_language,
+            'to': to_language
+        }
+
+        headers = {
+            'Ocp-Apim-Subscription-Key': TRANSLATOR_KEY,
+            'Ocp-Apim-Subscription-Region': TRANSLATOR_REGION,
+            'Content-type': 'application/json',
+            'X-ClientTraceId': str(uuid.uuid4())
+        }
+
+        body = [{'text': text_to_translate}]
+
+        # Send the request to Azure Translator API
+        response = requests.post(constructed_url, params=params, headers=headers, json=body)
+
+        # Handle the response
+        if response.status_code != 200:
+            return jsonify({"error": "Translation API error", "details": response.text}), response.status_code
+
+        translation_result = response.json()
+
+        # Format the response for the client
+        translations = [
+            {"language": t["to"], "translatedText": t["text"]}
+            for t in translation_result[0]["translations"]
+        ]
+
+        return jsonify({"translations": translations})
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':

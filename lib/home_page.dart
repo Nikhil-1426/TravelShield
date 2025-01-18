@@ -7,6 +7,8 @@ import 'create_reminder_page.dart';
 import 'settings_page.dart';
 import 'profile_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class HomePage extends StatefulWidget {
   final String uid;
@@ -83,6 +85,37 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
+
+  Future<String> translateText(String text, String languageCode) async {
+  const String flaskServerUrl = 'http://192.168.156.197:5000/translate';
+
+  try {
+    final Map<String, dynamic> payload = {
+      'text': text,
+      'to': [languageCode], // `to` must be a list as expected by Flask
+      'from': 'en', // Optionally include the source language
+    };
+
+    final http.Response response = await http.post(
+      Uri.parse(flaskServerUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(payload),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+      final List translations = responseData['translations'];
+      return translations.isNotEmpty ? translations[0]['translatedText'] : 'Translation unavailable.';
+    } else {
+      print('Error: ${response.statusCode} - ${response.body}');
+      return 'Translation failed. Please try again.';
+    }
+  } catch (e) {
+    print('Exception occurred: $e');
+    return 'An error occurred. Please try again.';
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -349,10 +382,19 @@ class _HomePageState extends State<HomePage> {
     double cardHeight = 100,
     Widget? child,
   }) {
+    // Map of supported languages for translation
+    final Map<String, String> supportedLanguages = {
+      'English': 'en',
+      'Spanish': 'es',
+      'French': 'fr',
+      'German': 'de',
+      'Chinese': 'zh',
+    };
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title and Add Button Row
+        // Title and Add/Translate Buttons Row
         Padding(
           padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 8.0),
           child: Row(
@@ -366,49 +408,109 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.white,
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.add, color: Colors.white),
-                onPressed: () {
-                  // Text controller for the input field
-                  final TextEditingController textController =
-                      TextEditingController();
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.add, color: Colors.white),
+                    onPressed: () {
+                      // Text controller for the input field
+                      final TextEditingController textController =
+                          TextEditingController();
 
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: const Text('Update'),
-                        content: TextField(
-                          controller: textController,
-                          decoration: const InputDecoration(
-                            hintText: 'Decsribe your condition',
-                            border: OutlineInputBorder(),
-                          ),
-                          maxLines: 3,
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              if (textController.text.isNotEmpty) {
-                                setState(() {
-                                  summaryText = textController.text;
-                                });
-                              }
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text('Update'),
-                          ),
-                        ],
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Update'),
+                            content: TextField(
+                              controller: textController,
+                              decoration: const InputDecoration(
+                                hintText: 'Describe your condition',
+                                border: OutlineInputBorder(),
+                              ),
+                              maxLines: 3,
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  if (textController.text.isNotEmpty) {
+                                    setState(() {
+                                      summaryText = textController.text;
+                                    });
+                                  }
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text('Update'),
+                              ),
+                            ],
+                          );
+                        },
                       );
                     },
+                  ),
+                  IconButton(
+  icon: const Icon(Icons.translate, color: Colors.white),
+  onPressed: () {
+    // Show dropdown for language selection
+    String? selectedLanguage;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Language'),
+          content: DropdownButton<String>(
+            isExpanded: true,
+            value: selectedLanguage,
+            hint: const Text('Select Language'),
+            items: supportedLanguages.entries
+                .map((entry) => DropdownMenuItem<String>(
+                      value: entry.value,
+                      child: Text(entry.key),
+                    ))
+                .toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                selectedLanguage = newValue;
+              });
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (selectedLanguage != null &&
+                    summaryText != null &&
+                    summaryText!.isNotEmpty) {
+                  String translatedText = await translateText(
+                    summaryText!,
+                    selectedLanguage!,
                   );
-                },
+                  setState(() {
+                    summaryText = translatedText;
+                  });
+                }
+                Navigator.of(context).pop();
+              },
+              child: const Text('Translate'),
+            ),
+          ],
+        );
+      },
+    );
+  },
+),
+                ],
               ),
             ],
           ),
@@ -445,7 +547,7 @@ class _HomePageState extends State<HomePage> {
                   padding: const EdgeInsets.all(12.0),
                   child: child ??
                       Text(
-                        title,
+                        (summaryText != null && summaryText!.isNotEmpty) ? summaryText! : title,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
