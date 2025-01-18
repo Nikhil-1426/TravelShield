@@ -359,7 +359,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "${trip['from']} → ${trip['to']}",
+                          "${trip['currentCity']} → ${trip['destinationCity']}",
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.teal,
@@ -367,12 +367,13 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          trip['date'] ?? 'N/A',
+                          trip['travelHealthScore'] ?? 'N/A',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 12,
                           ),
                         ),
+                        
                       ],
                     ),
                   ),
