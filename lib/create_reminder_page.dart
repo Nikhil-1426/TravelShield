@@ -82,7 +82,7 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildSection(
+                    child: _buildSection2(
                       "Departure",
                       Icon(Icons.calendar_today, color: Colors.teal),
                       departureDate != null
@@ -105,7 +105,7 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                   ),
                   SizedBox(width: 16),
                   Expanded(
-                    child: _buildSection(
+                    child: _buildSection2(
                       "Return",
                       Icon(Icons.calendar_today, color: Colors.teal),
                       returnDate != null
@@ -257,7 +257,7 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
             Text(
               title,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.teal,
               ),
@@ -267,6 +267,54 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
               value,
               style: TextStyle(
                 fontSize: 16,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  Widget _buildSection2(String title, Icon icon, String value, VoidCallback onTap) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 5,
+            offset: Offset(2, 2),
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.teal.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: icon,
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.teal,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 11,
                 color: Colors.black87,
               ),
             ),
@@ -586,7 +634,7 @@ Future<void> sendTravelHealthScoreRequest({
   required String travelID,
 }) async {
   try {
-    final uri = Uri.parse("http://192.168.76.29:5000/travel-health-score");
+    final uri = Uri.parse("http://192.168.156.197:5000/travel-health-score");
     final request = http.MultipartRequest('POST', uri);
 
     // Add fields
@@ -650,7 +698,7 @@ Future<void> sendToGemini({
   required String currentCityXlsxPath,
   required String destinationCityXlsxPath,
 }) async {
-  final uri = Uri.parse("http://192.168.76.29:5000/analyze-travel-health");
+  final uri = Uri.parse("http://192.168.156.197:5000/analyze-travel-health");
   final request = http.MultipartRequest('POST', uri);
 
   // Attach cities info

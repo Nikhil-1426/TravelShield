@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Initialize the Gemini API with your API key
-api_key = "AIzaSyBoMOD0t8PEM0lQ1yZV5wwirevfXEc88UQ"
+api_key = "AIzaSyCtZtaXIqlH-ZHMAWD5OJCEX_w5BZD79Aw"
 genai.configure(api_key=api_key)
 
 # Directory to save uploaded files temporarily

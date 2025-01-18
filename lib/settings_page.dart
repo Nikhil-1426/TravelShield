@@ -15,6 +15,8 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.teal, // Add this line to ensure no white space
+      extendBody: true,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text(
@@ -34,100 +36,118 @@ class SettingsPage extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              // Profile Section (User Details)
-              FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: Colors.teal),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                // Profile Section
+                FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: CircularProgressIndicator(color: Colors.white),
+                        ),
+                      );
+                    }
+
+                    var userData = snapshot.data?.data() as Map<String, dynamic>? ?? {};
+                    String name = userData['name'] ?? 'Guest User';
+                    String email = userData['email'] ?? 'user@example.com';
+
+                    return Container(
+                      margin: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.teal.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              name[0].toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.teal,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          Text(
+                            name,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.teal,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            email,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
                     );
-                  }
+                  },
+                ),
 
-                  if (snapshot.hasError) {
-                    return const Center(
-                      child: Text(
-                        "Error fetching profile data.",
-                        style: TextStyle(fontSize: 16, color: Colors.red),
-                      ),
-                    );
-                  }
-
-                  var userData = snapshot.data?.data() as Map<String, dynamic>? ?? {};
-                  String name = userData['name'] ?? 'Guest User';
-                  String email = userData['email'] ?? 'user@example.com';
-
-                  return Column(
-                    children: [
-                      const SizedBox(height: 15),
-                      CircleAvatar(
-                        radius: 60,
-                        backgroundColor: const Color.fromARGB(255, 9, 11, 13),
-                        child: const Icon(
-                          Icons.person,
-                          size: 40,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        email,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Color.fromARGB(255, 0, 0, 0),
-                        ),
-                      ),
-                      const SizedBox(height: 0),
-                    ],
-                  );
-                },
-              ),
-
-              // Settings Items with Cards
-              Expanded(
-                child: Padding(
+                // Settings Items
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Column(
                     children: [
-                      const SizedBox(height: 40),
-                      _buildRectangularCard(
+                      _buildSettingsCard(
                         title: 'Help Centre',
-                        icon: Icons.help,
+                        subtitle: 'Get support and answers',
+                        icon: Icons.help_outline,
                         color: Colors.blue,
                         destination: HelpCentrePage(),
-                        context: context,  // Pass context here
+                        context: context,
                       ),
-                      const SizedBox(height: 20),
-                      _buildRectangularCard(
+                      const SizedBox(height: 15),
+                      _buildSettingsCard(
                         title: 'Terms and Conditions',
-                        icon: Icons.description,
+                        subtitle: 'Read our terms of service',
+                        icon: Icons.description_outlined,
                         color: Colors.orange,
                         destination: TermsAndConditionsPage(),
-                        context: context,  // Pass context here
+                        context: context,
                       ),
-                      const SizedBox(height: 20),
-                      _buildRectangularCard(
+                      const SizedBox(height: 15),
+                      _buildSettingsCard(
                         title: 'About Us',
-                        icon: Icons.info,
+                        subtitle: 'Learn more about Travel Shield',
+                        icon: Icons.info_outline,
                         color: Colors.green,
                         destination: AboutUsPage(),
-                        context: context,  // Pass context here
+                        context: context,
                       ),
+                      const SizedBox(height: 30),
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -160,63 +180,82 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  // Define _getUid method to fetch UID using FirebaseAuth
-
-  Widget _buildRectangularCard({
+  Widget _buildSettingsCard({
     required String title,
+    required String subtitle,
     required IconData icon,
     required Color color,
     Widget? destination,
-    required BuildContext context,  // Added context parameter here
+    required BuildContext context,
   }) {
-    return GestureDetector(
-      onTap: () {
-        if (destination != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => destination),
-          );
-        }
-      },
-      child: Container(
-        height: 100,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 5,
-              offset: Offset(2, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 80,
-              height: double.infinity,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(15)),
-              ),
-              child: Icon(icon, color: color, size: 40),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            if (destination != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => destination),
+              );
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Icon(icon, color: color, size: 24),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.grey[400],
+                  size: 16,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
