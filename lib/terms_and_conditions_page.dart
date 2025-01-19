@@ -146,7 +146,7 @@ class TermsAndConditionsPage extends StatelessWidget {
                     const SizedBox(width: 16),
                     const Expanded(
                       child: Text(
-                        "Welcome to Remembron!",
+                        "Welcome to TravelShield!",
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,

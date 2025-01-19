@@ -2,7 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:health_passport/profile_page.dart';
+import 'package:health_passport/settings_page.dart';
 import 'package:health_passport/profile_page.dart';
 import 'package:health_passport/settings_page.dart';
 import 'package:path_provider/path_provider.dart';
@@ -14,6 +17,7 @@ class CreateReminderPage extends StatefulWidget {
   const CreateReminderPage({Key? key, required this.uid}) : super(key: key);
 
   @override
+  // ignore: library_private_types_in_public_api
   _CreateReminderPageState createState() => _CreateReminderPageState();
 }
 
@@ -64,7 +68,7 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [ 
+            children: [
               _buildSection(
                 "Current City",
                 Icon(Icons.flight_takeoff, color: Colors.teal),
@@ -82,7 +86,7 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildSection(
+                    child: _buildSection2(
                       "Departure",
                       Icon(Icons.calendar_today, color: Colors.teal),
                       departureDate != null
@@ -105,7 +109,7 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                   ),
                   SizedBox(width: 16),
                   Expanded(
-                    child: _buildSection(
+                    child: _buildSection2(
                       "Return",
                       Icon(Icons.calendar_today, color: Colors.teal),
                       returnDate != null
@@ -257,7 +261,7 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
             Text(
               title,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.teal,
               ),
@@ -267,6 +271,54 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
               value,
               style: TextStyle(
                 fontSize: 16,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  Widget _buildSection2(String title, Icon icon, String value, VoidCallback onTap) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 5,
+            offset: Offset(2, 2),
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.teal.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: icon,
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.teal,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 11,
                 color: Colors.black87,
               ),
             ),
