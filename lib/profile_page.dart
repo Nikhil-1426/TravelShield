@@ -37,9 +37,25 @@ class _ProfilePageState extends State<ProfilePage> {
         automaticallyImplyLeading: false,
         title: const Text(
           'Profile',
-          style: TextStyle(fontWeight: FontWeight.bold),
+           style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontSize: 24,
+          ),
+        
+          
         ),
-        backgroundColor: Colors.teal,
+        backgroundColor: Colors.transparent,  // Make AppBar transparent
+  flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [ Colors.tealAccent,Color.fromARGB(255, 19, 152, 152)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+      ),
+        
         centerTitle: true,
         elevation: 4,
       ),
@@ -211,7 +227,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
         color: Colors.teal,
         buttonBackgroundColor: Colors.tealAccent,
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color.fromARGB(255, 216, 248, 243),
         animationCurve: Curves.easeInOut,
         animationDuration: const Duration(milliseconds: 300),
         onTap: (index) {
@@ -367,7 +383,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          trip['travelHealthScore'] ?? 'N/A',
+                          trip['travelHealthScore'] ?? 'N/A' ,
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 12,

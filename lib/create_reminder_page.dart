@@ -2,12 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:health_passport/profile_page.dart';
 import 'package:health_passport/settings_page.dart';
-import 'package:health_passport/profile_page.dart';
-import 'package:health_passport/settings_page.dart';
+
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
@@ -53,7 +51,16 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
         ),
         title: Text("Plan a Trip", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         centerTitle: true,
-        backgroundColor: Colors.teal,
+        backgroundColor: Colors.transparent,  // Make AppBar transparent
+  flexibleSpace: Container(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [ Colors.tealAccent,Colors.teal],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+    ),
+  ),
         elevation: 4,
       ),
       body: Container(
@@ -164,39 +171,52 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
                 ),
               ),
               SizedBox(height: 32),
-              _buildResultCard(
-                "Travel Health Score",
-                travelHealthScore != null ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Score: ${travelHealthScore!.toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: _getScoreColor(travelHealthScore!),
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      isApproved
-                          ? "This trip is approved based on your health score."
-                          : "This trip is not recommended based on your health score.",
-                      style: TextStyle(fontSize: 16, color: Colors.black87),
-                    ),
-                  ],
-                ) : Text(
-                  "Travel health score details will appear here after submission.",
-                  style: TextStyle(color: Colors.black54),
+_buildResultCard(
+  "Travel Health Score",
+  travelHealthScore != null
+      ? Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Score: ${travelHealthScore!.toStringAsFixed(2)}",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _getScoreColor(travelHealthScore!),
                 ),
+              ),
+              SizedBox(height: 8),
+                          Text(
+                            isApproved
+                                ? "This trip is approved based on your health score."
+                                : "This trip is not recommended based on your health score.",
+                            style: TextStyle(fontSize: 16, color: Colors.black87),
+                          ),
+                        ],
+                      )
+                    : Text(
+                        "Travel health score details will appear here after submission.",
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                travelHealthScore != null
+                    ? "Score: ${travelHealthScore!.toStringAsFixed(2)}\n" +
+                        (isApproved
+                            ? "This trip is approved based on your health score."
+                            : "This trip is not recommended based on your health score.")
+                    : "Travel health score details will appear here after submission.",
               ),
               SizedBox(height: 20),
               _buildResultCard(
                 "Summary",
                 Text(
-                  analysisResult.isEmpty ? "Summary details will appear here..." : analysisResult,
+                  analysisResult.isEmpty
+                      ? "Summary details will appear here..."
+                      : analysisResult,
                   style: TextStyle(fontSize: 16),
                 ),
+                analysisResult.isEmpty
+                    ? "Summary details will appear here..."
+                    : analysisResult,
               ),
             ],
           ),
@@ -329,53 +349,127 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
     );
   }
 
-  Widget _buildResultCard(String title, Widget content) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 5,
-            offset: Offset(2, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.teal.withOpacity(0.2),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(15),
-                topRight: Radius.circular(15),
+  final Map<String, String> supportedLanguages = {
+  "English": "en",
+  "French": "fr",
+  "Spanish": "es",
+  "German": "de",
+  "Chinese": "zh",
+};
+
+  Widget _buildResultCard(String title, Widget content, String initialContent) {
+  String currentContent = initialContent; // Holds the current content for translation
+
+  return StatefulBuilder(
+    builder: (BuildContext context, StateSetter setState) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 5,
+              offset: Offset(2, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.teal.withOpacity(0.2),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(15),
+                  topRight: Radius.circular(15),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.translate, color: Colors.teal),
+                    onPressed: () {
+                      String? selectedLanguage;
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return StatefulBuilder(
+                            builder: (BuildContext context, StateSetter dialogSetState) {
+                              return AlertDialog(
+                                title: const Text('Select Language'),
+                                content: DropdownButton<String>(
+                                  isExpanded: true,
+                                  value: selectedLanguage,
+                                  hint: const Text('Select Language'),
+                                  items: supportedLanguages.entries
+                                      .map((entry) => DropdownMenuItem<String>(
+                                            value: entry.value,
+                                            child: Text(
+                                              '${entry.key} (${entry.value})',
+                                              style: const TextStyle(fontSize: 16),
+                                            ),
+                                          ))
+                                      .toList(),
+                                  onChanged: (String? newValue) {
+                                    dialogSetState(() {
+                                      selectedLanguage = newValue;
+                                    });
+                                  },
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      if (selectedLanguage != null && initialContent.isNotEmpty) {
+                                        String translatedText = await translateText(
+                                          initialContent,
+                                          selectedLanguage!,
+                                        );
+                                        setState(() {
+                                          currentContent = translatedText;
+                                        });
+                                      }
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Translate'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal,
-                  ),
-                ),
-              ],
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(currentContent, style: const TextStyle(fontSize: 16)),
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: content,
-          ),
-        ],
-      ),
-    );
-  }
-
+          ],
+        ),
+      );
+    },
+  );
+}
 
   void showAnalysisDialog(BuildContext context, String analysisResult) {
     showDialog(
@@ -458,6 +552,36 @@ class _CreateReminderPageState extends State<CreateReminderPage> {
       },
     );
   }
+
+  Future<String> translateText(String text, String languageCode) async {
+  const String flaskServerUrl = 'http://192.168.76.29:5000/translate';
+
+  try {
+    final Map<String, dynamic> payload = {
+      'text': text,
+      'to': [languageCode], // `to` must be a list as expected by Flask
+      'from': 'en', // Optionally include the source language
+    };
+
+    final http.Response response = await http.post(
+      Uri.parse(flaskServerUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(payload),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+      final List translations = responseData['translations'];
+      return translations.isNotEmpty ? translations[0]['translatedText'] : 'Translation unavailable.';
+    } else {
+      print('Error: ${response.statusCode} - ${response.body}');
+      return 'Translation failed. Please try again.';
+    }
+  } catch (e) {
+    print('Exception occurred: $e');
+    return 'An error occurred. Please try again.';
+  }
+}
 
   // Helper function to load asset to a temporary file
   Future<File> loadAssetToTempFile(String assetPath) async {
@@ -662,7 +786,7 @@ Future<void> sendTravelHealthScoreRequest({
       print('Parsed score: ${data['travelHealthScore']}');
 
       // Convert to double and handle potential null/invalid values
-      final double healthScore = double.parse(data['travelHealthScore'].toString());
+      final String healthScore = (data['travelHealthScore'].toString());
 
       // Update Firestore
       await FirebaseFirestore.instance
@@ -678,8 +802,8 @@ Future<void> sendTravelHealthScoreRequest({
       // Update state - Only update the score and approval status, keep existing analysis
       setState(() {
         print('Updating state with score: $healthScore'); // Debug print
-        travelHealthScore = healthScore;
-        isApproved = healthScore >= 70;
+        travelHealthScore = double.parse(healthScore);
+        isApproved = double.parse(healthScore) >= 7.00;
       });
     } else {
       print('Error response: ${response.statusCode} - ${response.body}');

@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/loading',
       routes: {
-        '/loading': (context) => LoadingPage(),
+        '/loading': (context) => LoadingScreen(),
         '/signin': (context) => SignInPage(),
         '/signup': (context) => SignUpPage(),
         '/trackHealth': (context) => _buildPage(context, TrackHealthPage as Widget Function(String p1)),

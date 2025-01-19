@@ -16,12 +16,27 @@ class AboutUsPage extends StatelessWidget {
       appBar: AppBar(
         automaticallyImplyLeading: true,
         backgroundColor: Colors.teal,
+        flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [ Colors.tealAccent,Color.fromARGB(255, 19, 152, 152)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+      ),
         title: const Text(
           "About Us",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         centerTitle: true,
         elevation: 4,
+        iconTheme: const IconThemeData(
+    color: Colors.white, // Set the back button color to white
+  ),
         actions: [
           IconButton(
             icon: const Icon(Icons.home),
