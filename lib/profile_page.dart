@@ -367,7 +367,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          trip['travelHealthScore'] ?? 'N/A',
+                          trip['travelHealthScore'] ?? 'N/A' ,
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 12,
