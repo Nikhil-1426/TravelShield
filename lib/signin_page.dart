@@ -20,8 +20,8 @@ class _SignInPageState extends State<SignInPage> {
     try {
       // Sign in with email and password
       await _auth.signInWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
 
       // Get the current user UID
@@ -50,100 +50,116 @@ class _SignInPageState extends State<SignInPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.teal, Colors.tealAccent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.health_and_safety,
-                    size: 50,
-                    color: Colors.teal,
-                  ),
+      resizeToAvoidBottomInset: false, // Disable auto-resizing to prevent overflow
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.teal, Colors.tealAccent],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight, // Ensure the content fills the screen
                 ),
-                SizedBox(height: 20),
-                Text(
-                  'Welcome Back!',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 10),
-                Text(
-                  'Sign in to continue',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white70,
-                  ),
-                ),
-                SizedBox(height: 30),
-                _buildTextField(
-                  Icons.email,
-                  'Email',
-                  false,
-                  _emailController,
-                ),
-                SizedBox(height: 20),
-                _buildTextField(
-                  Icons.lock,
-                  'Password',
-                  true,
-                  _passwordController,
-                ),
-                if (_errorMessage.isNotEmpty) ...[
-                  SizedBox(height: 10),
-                  Text(
-                    _errorMessage,
-                    style: TextStyle(color: Colors.red),
-                  ),
-                ],
-                SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _signIn,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.teal,
-                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                child: IntrinsicHeight(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min, // Shrink to fit content
+                        children: [
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.white,
+                            child: Icon(
+                              Icons.health_and_safety,
+                              size: 50,
+                              color: Colors.teal,
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          Text(
+                            'Welcome Back!',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            'Sign in to continue',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          SizedBox(height: 30),
+                          _buildTextField(
+                            Icons.email,
+                            'Email',
+                            false,
+                            _emailController,
+                          ),
+                          SizedBox(height: 20),
+                          _buildTextField(
+                            Icons.lock,
+                            'Password',
+                            true,
+                            _passwordController,
+                          ),
+                          if (_errorMessage.isNotEmpty) ...[
+                            SizedBox(height: 10),
+                            Text(
+                              _errorMessage,
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ],
+                          SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: _signIn,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.teal,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 40, vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: Text(
+                              'Sign In',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => SignUpPage()),
+                              );
+                            },
+                            child: Text(
+                              "Don't have an account? Sign Up",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  child: Text(
-                    'Sign In',
-                    style: TextStyle(fontSize: 18),
-                  ),
                 ),
-                SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => SignUpPage()),
-                    );
-                  },
-                  child: Text(
-                    "Don't have an account? Sign Up",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
