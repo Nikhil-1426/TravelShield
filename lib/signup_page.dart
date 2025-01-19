@@ -54,7 +54,10 @@ class _SignUpPageState extends State<SignUpPage> {
       // Navigate to Dynamic Questionnaire after successful sign up
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => DynamicQuestionnaire(uid: FirebaseAuth.instance.currentUser!.uid)),
+        MaterialPageRoute(
+          builder: (context) =>
+              DynamicQuestionnaire(uid: FirebaseAuth.instance.currentUser!.uid),
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -64,92 +67,113 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.teal, Colors.tealAccent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.person_add,
-                    size: 50,
-                    color: Colors.teal,
-                  ),
-                ),
-                SizedBox(height: 20),
-                Text(
-                  'Create Account',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 10),
-                Text(
-                  'Sign up to get started',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white70,
-                  ),
-                ),
-                SizedBox(height: 30),
-                _buildTextField(Icons.person, 'Full Name', false, nameController),
-                SizedBox(height: 20),
-                _buildTextField(Icons.email, 'Email', false, emailController),
-                SizedBox(height: 20),
-                _buildTextField(Icons.lock, 'Password', true, passwordController),
-                SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: signUp,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.teal,
-                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: Text(
-                    'Sign Up',
-                    style: TextStyle(fontSize: 18),
-                  ),
-                ),
-                SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => SignInPage()),
-                    );
-                  },
-                  child: Text(
-                    "Already have an account? Sign In",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
+Widget build(BuildContext context) {
+  return Scaffold(
+    resizeToAvoidBottomInset: false, // Disable auto-resizing
+    body: LayoutBuilder(
+      builder: (context, constraints) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.teal, Colors.tealAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-        ),
-      ),
-    );
-  }
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight, // Ensures content fills the screen
+              ),
+              child: IntrinsicHeight(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min, // Shrink to fit the content
+                      children: [
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.white,
+                          child: Icon(
+                            Icons.person_add,
+                            size: 50,
+                            color: Colors.teal,
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          'Create Account',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          'Sign up to get started',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white70,
+                          ),
+                        ),
+                        SizedBox(height: 30),
+                        _buildTextField(
+                            Icons.person, 'Full Name', false, nameController),
+                        SizedBox(height: 20),
+                        _buildTextField(
+                            Icons.email, 'Email', false, emailController),
+                        SizedBox(height: 20),
+                        _buildTextField(
+                            Icons.lock, 'Password', true, passwordController),
+                        SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: signUp,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.teal,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 40, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: Text(
+                            'Sign Up',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => SignInPage()),
+                            );
+                          },
+                          child: Text(
+                            "Already have an account? Sign In",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    ),
+  );
+}
 
-  Widget _buildTextField(IconData icon, String hintText, bool isPassword, TextEditingController controller) {
+
+  Widget _buildTextField(IconData icon, String hintText, bool isPassword,
+      TextEditingController controller) {
     return TextField(
       controller: controller,
       obscureText: isPassword,
