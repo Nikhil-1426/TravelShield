@@ -455,61 +455,72 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                   IconButton(
-  icon: const Icon(Icons.translate, color: Colors.white),
-  onPressed: () {
-    // Show dropdown for language selection
-    String? selectedLanguage;
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select Language'),
-          content: DropdownButton<String>(
-            isExpanded: true,
-            value: selectedLanguage,
-            hint: const Text('Select Language'),
-            items: supportedLanguages.entries
-                .map((entry) => DropdownMenuItem<String>(
-                      value: entry.value,
-                      child: Text(entry.key),
-                    ))
-                .toList(),
-            onChanged: (String? newValue) {
-              setState(() {
-                selectedLanguage = newValue;
-              });
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                if (selectedLanguage != null &&
-                    summaryText != null &&
-                    summaryText!.isNotEmpty) {
-                  String translatedText = await translateText(
-                    summaryText!,
-                    selectedLanguage!,
-                  );
-                  setState(() {
-                    summaryText = translatedText;
-                  });
-                }
-                Navigator.of(context).pop();
-              },
-              child: const Text('Translate'),
-            ),
-          ],
-        );
-      },
-    );
-  },
-),
+                    icon: const Icon(Icons.translate, color: Colors.white),
+                    onPressed: () {
+                      // Show dropdown for language selection
+                      String? selectedLanguage;
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return StatefulBuilder(
+                            builder: (BuildContext context, StateSetter setDialogState) {
+                              return AlertDialog(
+                                title: const Text('Select Language'),
+                                content: DropdownButton<String>(
+                                  isExpanded: true,
+                                  value: selectedLanguage,
+                                  hint: const Text('Select Language'),
+                                  items: supportedLanguages.entries
+                                      .map((entry) => DropdownMenuItem<String>(
+                                            value: entry.value,
+                                            child: Container(
+                                              height: 50, // Fixed height for dropdown items
+                                              alignment: Alignment.centerLeft, // Align text consistently
+                                              child: Text(
+                                                '${entry.key} (${entry.value})',
+                                                style: const TextStyle(fontSize: 16), // Uniform text size
+                                              ),
+                                            ),
+                                          ))
+                                      .toList(),
+                                  onChanged: (String? newValue) {
+                                    setDialogState(() {
+                                      selectedLanguage = newValue;
+                                    });
+                                  },
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      if (selectedLanguage != null &&
+                                          summaryText != null &&
+                                          summaryText!.isNotEmpty) {
+                                        String translatedText = await translateText(
+                                          summaryText!,
+                                          selectedLanguage!,
+                                        );
+                                        setState(() {
+                                          summaryText = translatedText;
+                                        });
+                                      }
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Translate'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ],
               ),
             ],
