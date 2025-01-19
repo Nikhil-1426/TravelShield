@@ -15,22 +15,35 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.teal, // Add this line to ensure no white space
+      backgroundColor: const Color.fromARGB(255, 3, 97, 89),
       extendBody: true,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text(
+        title: Text(
           'Settings',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontSize: 24,
+          ),
         ),
-        backgroundColor: Colors.teal,
+        backgroundColor: Colors.transparent,  // Make AppBar transparent
+  flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [ Colors.tealAccent,Color.fromARGB(255, 19, 152, 152)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+      ),
         centerTitle: true,
-        elevation: 4,
+        elevation: 0,
       ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.teal, Colors.tealAccent],
+            colors: [Color.fromARGB(255, 63, 152, 143), Color.fromARGB(255, 141, 249, 224)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -38,83 +51,88 @@ class SettingsPage extends StatelessWidget {
         child: SafeArea(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            child: Column(
-              children: [
-                // Profile Section
-                FutureBuilder<DocumentSnapshot>(
-                  future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: Padding(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 30, 20, 100),
+              child: Column(
+                children: [
+                  // Profile Section
+                  FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
                           padding: EdgeInsets.all(20.0),
-                          child: CircularProgressIndicator(color: Colors.white),
-                        ),
-                      );
-                    }
-
-                    var userData = snapshot.data?.data() as Map<String, dynamic>? ?? {};
-                    String name = userData['name'] ?? 'Guest User';
-                    String email = userData['email'] ?? 'user@example.com';
-
-                    return Container(
-                      margin: const EdgeInsets.all(20),
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            spreadRadius: 5,
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.teal.withOpacity(0.1),
-                              shape: BoxShape.circle,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
                             ),
-                            child: Text(
-                              name[0].toUpperCase(),
+                          ),
+                        );
+                      }
+
+                      var userData = snapshot.data?.data() as Map<String, dynamic>? ?? {};
+                      String name = userData['name'] ?? 'Guest User';
+                      String email = userData['email'] ?? 'user@example.com';
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 40),
+                        child: Column(
+                          children: [
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 10,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  name[0].toUpperCase(),
+                                  style: const TextStyle(
+                                    fontSize: 42,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.teal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              name,
                               style: const TextStyle(
-                                fontSize: 40,
+                                fontSize: 26,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.teal,
+                                color: Colors.white,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 15),
-                          Text(
-                            name,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.teal,
+                            const SizedBox(height: 8),
+                            Text(
+                              email,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                                letterSpacing: 0.3,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            email,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
 
-                // Settings Items
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
+                  // Settings Items
+                  Column(
                     children: [
                       _buildSettingsCard(
                         title: 'Help Centre',
@@ -142,25 +160,25 @@ class SettingsPage extends StatelessWidget {
                         destination: AboutUsPage(),
                         context: context,
                       ),
-                      const SizedBox(height: 30),
                     ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
       bottomNavigationBar: CurvedNavigationBar(
         index: 2,
+        height: 65,
         items: const [
           Icon(Icons.person, size: 30, color: Colors.white),
           Icon(Icons.home, size: 30, color: Colors.white),
           Icon(Icons.settings, size: 30, color: Colors.white),
         ],
-        color: Colors.teal,
+        color: const Color.fromRGBO(0, 150, 136, 1),
         buttonBackgroundColor: Colors.tealAccent,
-        backgroundColor: Colors.white,
+        backgroundColor: const Color.fromARGB(255, 216, 248, 243),
         animationCurve: Curves.easeInOut,
         animationDuration: const Duration(milliseconds: 300),
         onTap: (index) {
@@ -190,13 +208,14 @@ class SettingsPage extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withOpacity(0.95),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withOpacity(0.08),
             blurRadius: 10,
             spreadRadius: 2,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -213,7 +232,7 @@ class SettingsPage extends StatelessWidget {
             }
           },
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Row(
               children: [
                 Container(
@@ -221,8 +240,12 @@ class SettingsPage extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                      color: color.withOpacity(0.3),
+                      width: 1,
+                    ),
                   ),
-                  child: Icon(icon, color: color, size: 24),
+                  child: Icon(icon, color: color, size: 26),
                 ),
                 const SizedBox(width: 15),
                 Expanded(
@@ -241,8 +264,9 @@ class SettingsPage extends StatelessWidget {
                       Text(
                         subtitle,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           color: Colors.grey[600],
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ],

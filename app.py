@@ -165,8 +165,8 @@ def travel_health_score():
             {'text': current_city_diet_text},
             {'text': destination_city_diet_text}
         ])
-
         travel_health_score = response.text.strip()
+        print(travel_health_score)
         return jsonify({'travelHealthScore': travel_health_score})
         
     except Exception as e:

@@ -15,17 +15,32 @@ class HelpCentrePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.teal,
+        flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [ Colors.tealAccent,Color.fromARGB(255, 19, 152, 152)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+      ),
         title: const Text(
           "Help Centre",
           style: TextStyle(
             fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
+     
         centerTitle: true,
         elevation: 4,
+        iconTheme: const IconThemeData(
+        color: Colors.white, // Set the back button color to white
+      ),
         actions: [
           IconButton(
             icon: const Icon(Icons.home),
+            color: Colors.white,
             onPressed: () async {
               final uid = await _getUid();
               if (uid != null && uid.isNotEmpty) {

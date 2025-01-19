@@ -36,6 +36,15 @@ flutter:
     - assets/mumbai_diet.xlsx
     - assets/washington_diet.xlsx
     - assets/capetown_diet.xlsx
+    - assets/App_logo2.png
+    - assets/bckgrnd2.jpg
+    - assets/amazon.png
+    # - assets/bckgrnd_img.png
+    #- assets/earth_logo.jpg
+    #- assets/travel_icon.jpg
+    # - assets/bckgrnd3.jpg
+    #- assets/bckgrnd2.jpg
+    # - assets/bckgrnd1.jpg
 
 
 # Specify the Android package name to match the manifest.

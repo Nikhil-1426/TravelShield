@@ -24,11 +24,34 @@ class _HomePageState extends State<HomePage> {
   bool isLoadingSummary = true;
   double? healthScore;
 
+String username = 'Username'; // Default value
+Future<void> _fetchUsername() async {
+  try {
+    var userDocument = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.uid)
+        .get();
+
+    if (userDocument.exists) {
+      print('User document data: ${userDocument.data()}'); // Debug print
+      setState(() {
+        username = userDocument.data()?['name'] ?? 'Default Username';
+      });
+    } else {
+      print('No such document!');
+    }
+  } catch (e) {
+    print('Error fetching username: $e');
+  }
+}
+
+
   @override
   void initState() {
     super.initState();
     _fetchSummary();
     _fetchHealthScore();
+    _fetchUsername();
   }
 
   Future<void> _fetchSummary() async {
@@ -87,7 +110,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<String> translateText(String text, String languageCode) async {
-  const String flaskServerUrl = 'http://192.168.156.197:5000/translate';
+  const String flaskServerUrl = 'http://192.168.76.29:5000/translate';
 
   try {
     final Map<String, dynamic> payload = {
@@ -124,14 +147,23 @@ class _HomePageState extends State<HomePage> {
         automaticallyImplyLeading: false,
         title: const Text(
           'Travel Shield',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
         ),
-        backgroundColor: Colors.teal,
+        backgroundColor: Colors.transparent,  // Make AppBar transparent
+  flexibleSpace: Container(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [ Colors.tealAccent,Color.fromARGB(255, 19, 152, 152)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+    ),
+  ),
         centerTitle: true,
         elevation: 4,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout,color:Colors.white),
             onPressed: () async {
               final prefs = await SharedPreferences.getInstance();
               await prefs.clear();
@@ -147,7 +179,7 @@ class _HomePageState extends State<HomePage> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.teal, Colors.tealAccent],
+            colors: [Color.fromARGB(255, 63, 152, 143) ,Color.fromARGB(255, 141, 249, 224)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -160,59 +192,141 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 children: [
                   const SizedBox(height: 40),
-                  _buildRectangularCard(
-                    title: 'Your healthcare companion at your fingertips',
-                    icon: Icons.health_and_safety,
-                    color: Colors.purple,
-                    cardHeight: 160,
-                  ),
+                  Stack(
+  children: [
+    // Background image for the entire card with curved corners and shadow
+    ClipRRect(
+      borderRadius: BorderRadius.circular(20.0), // Apply curved corners
+      child: Container(
+        height: 160,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/bckgrnd2.jpg'),
+            fit: BoxFit.cover, // Ensures the background image covers the container
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5), // Shadow color with transparency
+              spreadRadius: 2, // Spread of the shadow
+              blurRadius: 8, // Blur effect for the shadow
+              offset: Offset(0, 4), // Offset of the shadow (vertical offset in this case)
+            ),
+          ],
+        ),
+      ),
+    ),
+    // Small grey rectangle on the left
+    Positioned(
+      left: 5,
+      top: 0,
+      bottom: 0,
+      width: 90, // Adjust width to your preference
+      child: Container(
+        color: Color.fromARGB(258, 188, 246, 244), // Solid grey color
+        child: Center(
+          child: Image.asset(
+            'assets/App_logo2.png', // Path to the logo
+            height: 90, // Adjust the size of the logo
+            width: 90,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    ),
+    // Text content written over the background image
+    Positioned(
+      left: 110, // Offset to the right of the grey rectangle
+      top: 30, // Adjust vertical alignment
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 7, width: 10),
+          Text(
+            'Hi $username!',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: const Color.fromARGB(255, 205, 241, 236), // White text for contrast
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Your healthcare companion \nat your fingertips',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white70, // Slightly transparent white
+            ),
+          ),
+        ],
+      ),
+    ),
+  ],
+),
+
                   const SizedBox(height: 20),
                   Row(
                     children: [
+                    
                       Expanded(
                         child: _buildFeatureCard(
                           title: 'Health Score',
                           icon: Icons.favorite,
                           color: Colors.red,
-                          content: healthScore == null
-                              ? const CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation(Colors.red),
-                                )
-                              : CircularPercentIndicator(
-                                  radius: 50.0,
-                                  lineWidth: 8.0,
-                                  percent: (healthScore != null
-                                      ? (healthScore! / 10.0).clamp(0.0, 1.0)
-                                      : 0.0),
-                                  center: Text(
-                                    "${healthScore?.toStringAsFixed(2) ?? '0.00'}",
-                                    style: const TextStyle(
-                                      fontSize: 12.0,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.teal,
-                                    ),
-                                  ),
-                                  progressColor: Colors.green,
-                                  backgroundColor: Colors.white,
+                          content: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Health Score',
+                                style: const TextStyle(
+                                  fontSize: 21.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color.fromARGB(255, 38, 144, 137),
                                 ),
+                              ),
+                              const SizedBox(height: 7),
+                              healthScore == null
+                                  ? const CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation(Colors.red),
+                                    )
+                                  : CircularPercentIndicator(
+                                      radius: 45.0,
+                                      lineWidth: 8.0,
+                                      percent: (healthScore! / 10.0).clamp(0.0, 1.0),
+                                      center: Text(
+                                        "${healthScore?.toStringAsFixed(2) ?? '0.00'}",
+                                        style: const TextStyle(
+                                          fontFamily: 'ArialRoundedMTBold',
+                                          fontSize: 20.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color.fromARGB(255, 44, 166, 158),
+                                        ),
+                                      ),
+                                      progressColor: const Color.fromARGB(255, 44, 166, 158),
+                                      backgroundColor: Colors.white,
+                                    ),
+                            ],
+                          ),
                         ),
                       ),
+
+
                       const SizedBox(width: 20),
                       Expanded(
                         child: _buildFeatureCard(
                           title: 'Plan a Trip',
-                          icon: Icons.airplanemode_active,
-                          color: Colors.blue,
+                          imagePath: 'assets/amazon.png',
+                          color: const Color.fromARGB(255, 44, 166, 158),
                           destination: CreateReminderPage(uid: widget.uid),
                         ),
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 20),
                   _buildReportContainer(
                     title: 'Health Summary',
                     icon: Icons.bar_chart,
-                    color: Colors.green,
+                    color: Colors.teal,
                     cardHeight: 250,
                     child: isLoadingSummary
                         ? const Center(
@@ -250,7 +364,7 @@ class _HomePageState extends State<HomePage> {
         ],
         color: Colors.teal,
         buttonBackgroundColor: Colors.tealAccent,
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color.fromARGB(255, 216, 248, 243),
         animationCurve: Curves.easeInOut,
         animationDuration: const Duration(milliseconds: 300),
         onTap: (index) {
@@ -273,107 +387,112 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFeatureCard({
-    required String title,
-    required IconData icon,
-    required Color color,
-    Widget? content,
-    Widget? destination,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        if (destination != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => destination),
-          );
-        }
-      },
-      child: Container(
-        height: 150,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 5,
-              offset: Offset(2, 2),
-            ),
-          ],
-        ),
-        child: content ??
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 50, color: color),
-                  const SizedBox(height: 10),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-      ),
-    );
-  }
-
-  Widget _buildRectangularCard({
-    required String title,
-    required IconData icon,
-    required Color color,
-    double cardHeight = 100,
-    Widget? child,
-  }) {
-    return Container(
-      height: cardHeight,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 5,
-            offset: Offset(2, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 80,
-            height: double.infinity,
+        required String title,
+        IconData? icon,
+        String? imagePath, // New parameter for image path
+        required Color color,
+        Widget? content,
+        Widget? destination,
+      }) {
+        return GestureDetector(
+          onTap: () {
+            if (destination != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => destination),
+              );
+            }
+          },
+          child: Container(
+            height: 150,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius:
-                  const BorderRadius.horizontal(left: Radius.circular(15)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 5,
+                  offset: Offset(2, 2),
+                ),
+              ],
             ),
-            child: Icon(icon, color: color, size: 40),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: child ??
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal,
-                    ),
+            child: content ?? 
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal,
+                        ),
+                      ),
+                      imagePath != null
+                          ? Image.asset(imagePath, height: 100, fit: BoxFit.contain)
+                          : Icon(icon, size: 80, color: color),
+                      const SizedBox(height: 4),
+                      
+                    ],
                   ),
-            ),
+                ),
           ),
-        ],
-      ),
-    );
-  }
+        );
+      }
+
+
+  // Widget _buildRectangularCard({
+  //   required String title,
+  //   required IconData icon,
+  //   required Color color,
+  //   double cardHeight = 100,
+  //   Widget? child,
+  // }) {
+  //   return Container(
+  //     height: cardHeight,
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: BorderRadius.circular(15),
+  //       boxShadow: const [
+  //         BoxShadow(
+  //           color: Colors.black26,
+  //           blurRadius: 5,
+  //           offset: Offset(2, 2),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         Container(
+  //           width: 80,
+  //           height: double.infinity,
+  //           decoration: BoxDecoration(
+  //             color: color.withOpacity(0.2),
+  //             borderRadius:
+  //                 const BorderRadius.horizontal(left: Radius.circular(15)),
+  //           ),
+  //           child: Icon(icon, color: color, size: 40),
+  //         ),
+  //         const SizedBox(width: 10),
+  //         Expanded(
+  //           child: Padding(
+  //             padding: const EdgeInsets.all(12.0),
+  //             child: child ??
+  //                 Text(
+  //                   title,
+  //                   style: const TextStyle(
+  //                     fontSize: 16,
+  //                     fontWeight: FontWeight.bold,
+  //                     color: Colors.teal,
+  //                   ),
+  //                 ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildReportContainer({
     required String title,
