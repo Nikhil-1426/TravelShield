@@ -110,7 +110,7 @@ Future<void> _fetchUsername() async {
   }
 
   Future<String> translateText(String text, String languageCode) async {
-  const String flaskServerUrl = 'http://192.168.76.29:5000/translate';
+  const String flaskServerUrl = 'http://192.168.156.197:5000/translate';
 
   try {
     final Map<String, dynamic> payload = {
@@ -440,59 +440,6 @@ Future<void> _fetchUsername() async {
           ),
         );
       }
-
-
-  // Widget _buildRectangularCard({
-  //   required String title,
-  //   required IconData icon,
-  //   required Color color,
-  //   double cardHeight = 100,
-  //   Widget? child,
-  // }) {
-  //   return Container(
-  //     height: cardHeight,
-  //     decoration: BoxDecoration(
-  //       color: Colors.white,
-  //       borderRadius: BorderRadius.circular(15),
-  //       boxShadow: const [
-  //         BoxShadow(
-  //           color: Colors.black26,
-  //           blurRadius: 5,
-  //           offset: Offset(2, 2),
-  //         ),
-  //       ],
-  //     ),
-  //     child: Row(
-  //       children: [
-  //         Container(
-  //           width: 80,
-  //           height: double.infinity,
-  //           decoration: BoxDecoration(
-  //             color: color.withOpacity(0.2),
-  //             borderRadius:
-  //                 const BorderRadius.horizontal(left: Radius.circular(15)),
-  //           ),
-  //           child: Icon(icon, color: color, size: 40),
-  //         ),
-  //         const SizedBox(width: 10),
-  //         Expanded(
-  //           child: Padding(
-  //             padding: const EdgeInsets.all(12.0),
-  //             child: child ??
-  //                 Text(
-  //                   title,
-  //                   style: const TextStyle(
-  //                     fontSize: 16,
-  //                     fontWeight: FontWeight.bold,
-  //                     color: Colors.teal,
-  //                   ),
-  //                 ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   Widget _buildReportContainer({
     required String title,

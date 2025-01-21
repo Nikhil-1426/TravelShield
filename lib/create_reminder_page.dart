@@ -5,7 +5,6 @@ import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:health_passport/profile_page.dart';
 import 'package:health_passport/settings_page.dart';
-
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
@@ -554,7 +553,7 @@ _buildResultCard(
   }
 
   Future<String> translateText(String text, String languageCode) async {
-  const String flaskServerUrl = 'http://192.168.76.29:5000/translate';
+  const String flaskServerUrl = 'http://192.168.156.197:5000/translate';
 
   try {
     final Map<String, dynamic> payload = {
@@ -615,8 +614,6 @@ _buildResultCard(
       destinationCityXlsxPath: destinationCityTempFile.path,
     );
   }
-
-  // Process the form data and send it to the /travel-health-score endpoint
 
   // Fetch user responses from Firestore
   Future<Map<String, dynamic>> fetchUserResponses() async {
@@ -762,7 +759,7 @@ Future<void> sendTravelHealthScoreRequest({
   required String travelID,
 }) async {
   try {
-    final uri = Uri.parse("http://192.168.76.29:5000/travel-health-score");
+    final uri = Uri.parse("http://192.168.156.197:5000/travel-health-score");
     final request = http.MultipartRequest('POST', uri);
 
     // Add fields
@@ -826,7 +823,7 @@ Future<void> sendToGemini({
   required String currentCityXlsxPath,
   required String destinationCityXlsxPath,
 }) async {
-  final uri = Uri.parse("http://192.168.76.29:5000/analyze-travel-health");
+  final uri = Uri.parse("http://192.168.156.197:5000/analyze-travel-health");
   final request = http.MultipartRequest('POST', uri);
 
   // Attach cities info
