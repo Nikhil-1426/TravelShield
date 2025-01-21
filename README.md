@@ -109,9 +109,9 @@ flutter run
 3. **FireAuth:**
    - Provides secure user authentication and management, ensuring that user data remains protected.
 4. **Flask API:**
-  - Handles backend processes for trip analysis, health profiling, and REST API calls, ensuring seamless communication between the app and AI services.
+   - Handles backend processes for trip analysis, health profiling, and REST API calls, ensuring seamless communication between the app and AI services.
 5. **Azure Translator:**
-  - Powers multilingual support by translating health insights and trip summaries, enabling global accessibility for users.
+   - Powers multilingual support by translating health insights and trip summaries, enabling global accessibility for users.
 6. **Gemini API:**
    - Processes and tracks reminders through the user's conversations.
 7. **Figma:**
