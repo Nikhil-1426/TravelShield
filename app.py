@@ -11,7 +11,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Initialize the Gemini API with your API key
-api_key = "AIzaSyDf95m97fUjvn4CuaC4KD8KHicDF28l4y4"
+api_key = "AIzaSyBQ1sHmu5KnBnmVjyXnpVX5uIs5ornuNnA"
 genai.configure(api_key=api_key)
 
 # Azure Translator API configuration

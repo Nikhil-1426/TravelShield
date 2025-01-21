@@ -729,7 +729,7 @@ class _DynamicQuestionnaireState extends State<DynamicQuestionnaire> {
   // Call the /health-score endpoint
     Future<double?> _getHealthScore(Map<String, dynamic> jsonData) async {
     final url = Uri.parse(
-      'http://192.168.76.29:5000/generalized-health-score', // Replace with actual URL// Replace with actual URL
+      'http://192.168.156.197:5000/generalized-health-score', // Replace with actual URL// Replace with actual URL
     );
     
     try {
@@ -759,7 +759,7 @@ class _DynamicQuestionnaireState extends State<DynamicQuestionnaire> {
   Future<String?> _getSummaryFromGemini(Map<String, dynamic> jsonData) async {
     try {
       // Replace with your actual Gemini API endpoint
-      final uri = Uri.parse('http://192.168.76.29:5000/summarize');
+      final uri = Uri.parse('http://192.168.156.197:5000/summarize');
       final response = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
