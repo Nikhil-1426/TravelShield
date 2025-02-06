@@ -103,9 +103,9 @@ flutter run
 
 ## Tech Stack
 1. **Flutter / Dart:**
-   - Used for building a seamless, cross-platform mobile application with a user-friendly interface designed for individuals with Alzheimer's.
+   - Used for building a seamless, cross-platform mobile application with a user-friendly interface designed for global travellers.
 2. **Firebase:**
-   - Stores user data, reminders, geofencing information, and facial recognition data, providing real-time synchronization and easy access.
+   - Stores user data, reminders, vaccination information, symptoms history, trip history and all health score data, providing real-time synchronization and easy access.
 3. **FireAuth:**
    - Provides secure user authentication and management, ensuring that user data remains protected.
 4. **Flask API:**
@@ -113,7 +113,7 @@ flutter run
 5. **Azure Translator:**
    - Powers multilingual support by translating health insights and trip summaries, enabling global accessibility for users.
 6. **Gemini API:**
-   - Processes and tracks reminders through the user's conversations.
+   - Gives diet and general recommendations based on a custom prompt according to user's health history.
 7. **Figma:**
    - Used for designing and prototyping the app's user interface and user experience, ensuring a visually appealing and intuitive design.
 
