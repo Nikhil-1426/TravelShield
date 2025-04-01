@@ -565,75 +565,89 @@ class _ProfilePageState extends State<ProfilePage> {
     final photoController = TextEditingController();
 
     showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Update Profile"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: ageController,
-                decoration: const InputDecoration(
-                    labelText: "Age", hintText: "Enter Age"),
-                keyboardType: TextInputType.number,
-              ),
-              TextField(
-                controller: genderController,
-                decoration: const InputDecoration(
-                    labelText: "Gender", hintText: "Enter Gender"),
-              ),
-              TextField(
-                controller: photoController,
-                decoration:
-                    const InputDecoration(labelText: "Photo URL (optional)"),
-              ),
-            ],
+  context: context,
+  builder: (BuildContext context) {
+    return AlertDialog(
+      title: const Text("Update Profile"),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: ageController,
+            decoration: const InputDecoration(
+              labelText: "Age",
+              hintText: "Enter Age",
+            ),
+            keyboardType: TextInputType.number,
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text("Cancel"),
+          DropdownButtonFormField<String>(
+            value: genderController.text.isNotEmpty ? genderController.text : null,
+            items: ['Male', 'Female', 'Other'].map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              genderController.text = newValue!;
+            },
+            decoration: const InputDecoration(
+              labelText: "Gender",
+              hintText: "Select Gender",
             ),
-            TextButton(
-              onPressed: () {
-                if (ageController.text.isEmpty ||
-                    genderController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text("Age and Gender are required")),
-                  );
-                  return;
+          ),
+          TextField(
+            controller: photoController,
+            decoration: const InputDecoration(labelText: "Photo URL (optional)"),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text("Cancel"),
+        ),
+        TextButton(
+          onPressed: () {
+            int? age = int.tryParse(ageController.text);
+            if (age == null || age <= 0) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Please enter a valid age greater than 0")),
+              );
+              return;
+            }
+            if (genderController.text.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Please select a gender")),
+              );
+              return;
+            }
+            
+            // Update the Firestore data
+            FirebaseFirestore.instance.collection('users').doc(widget.uid).update({
+              'age': ageController.text,
+              'gender': genderController.text,
+              'photoUrl': photoController.text.isNotEmpty ? photoController.text : photoUrl,
+            }).then((_) {
+              setState(() {
+                age = int.tryParse(ageController.text);
+                gender = genderController.text;
+                if (photoController.text.isNotEmpty) {
+                  photoUrl = photoController.text;
                 }
-                // Update the Firestore data
-                FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(widget.uid)
-                    .update({
-                  'age': ageController.text,
-                  'gender': genderController.text,
-                  'photoUrl': photoController.text.isNotEmpty
-                      ? photoController.text
-                      : photoUrl,
-                }).then((_) {
-                  setState(() {
-                    age = ageController.text;
-                    gender = genderController.text;
-                    if (photoController.text.isNotEmpty) {
-                      photoUrl = photoController.text;
-                    }
-                    profileUpdated = true;
-                  });
-                  Navigator.of(context).pop();
-                });
-              },
-              child: const Text("Update"),
-            ),
-          ],
-        );
-      },
+                profileUpdated = true;
+              });
+              Navigator.of(context).pop();
+            });
+          },
+          child: const Text("Update"),
+        ),
+      ],
     );
+  },
+);
+
   }
 }
